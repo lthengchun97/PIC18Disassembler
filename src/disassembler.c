@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-checkidentifier opcodeTable[256] = {
+CheckIdentifier opcodeTable[256] = {
   [0x24]={addwf,0,0},
   [0x25]={addwf,0,1},
   [0x26]={addwf,1,0},
@@ -13,12 +13,17 @@ checkidentifier opcodeTable[256] = {
 
   char * disassembler (uint32_t code)
 {
-  int opcode = code >> 8;
+  uint8_t opcode = code >> 8;
+  uint32_t ci = code;
+  uint8_t next_8 = code & 0x00ff;
+  printf("addwf 0x%2x WREG,ACCESS",next_8);
+
   return NULL;
 }
 
-int addwf (uint8_t *code){
+int addwf (uint8_t *code,CheckIdentifier* ci){
   uint8_t next_8 = *code & 0x00ff;
+/*
   if(a==0 && d==0)
     printf("addwf %d WREG,ACCESS",next_8);
   if(a==0 && d==1)
@@ -27,5 +32,6 @@ int addwf (uint8_t *code){
     printf("addwf %d BANKED,ACCESS",next_8);
   else
     printf("addwf %d BANKED,f",next_8);
+    */
   return 0;
 };

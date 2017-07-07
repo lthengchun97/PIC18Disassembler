@@ -3,13 +3,13 @@
 #include <stdint.h>
 
 
-typedef struct checkidentifier checkidentifier;
-struct checkidentifier{
+typedef struct CheckIdentifier CheckIdentifier;
+struct CheckIdentifier{
   int (*execute)(uint8_t *code);    // a function
   int a;
   int d;
 };
-int addwf (uint8_t *code);
+int addwf (uint8_t *code,CheckIdentifier* ci);
 char *disassembler (uint32_t code);
-extern checkidentifier opcodeTable[];
+extern CheckIdentifier opcodeTable[];
 #endif // _DISASSEMBLER_H
