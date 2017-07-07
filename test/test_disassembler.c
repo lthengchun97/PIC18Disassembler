@@ -9,7 +9,8 @@ void tearDown(void)
 {
 }
 
-void test_disassembler_NeedToImplement(void)
+void test_addwf(void)
 {
-    TEST_IGNORE_MESSAGE("Need to Implement disassembler");
+  char result = dissamble(0x2400);  
+  TEST_ASSERT_EQUAL_STRING("addwf WREG,ACCESS",result);
 }
