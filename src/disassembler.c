@@ -1,6 +1,7 @@
 #include "disassembler.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 CheckIdentifier opcodeTable[256] = {
   [0x24]={addwf,0,0},
@@ -15,14 +16,15 @@ CheckIdentifier opcodeTable[256] = {
 {
   uint8_t opcode = code >> 8;
   uint32_t ci = code;
-  uint8_t next_8 = code & 0x00ff;
-  printf("addwf 0x%2x WREG,ACCESS",next_8);
-
-  return NULL;
+  CheckIdentifier opcodeTable[256];
 }
 
-int addwf (uint8_t *code,CheckIdentifier* ci){
+char* addwf (uint8_t *code/*,CheckIdentifier* ci*/){
+  char *buffer;
+  buffer = malloc(1028);
   uint8_t next_8 = *code & 0x00ff;
+  sprintf(buffer,"addwf  0x%2x WREG,ACCESS",next_8);
+
 /*
   if(a==0 && d==0)
     printf("addwf %d WREG,ACCESS",next_8);
@@ -32,6 +34,6 @@ int addwf (uint8_t *code,CheckIdentifier* ci){
     printf("addwf %d BANKED,ACCESS",next_8);
   else
     printf("addwf %d BANKED,f",next_8);
-    */
-  return 0;
+*/
+  return buffer;
 };

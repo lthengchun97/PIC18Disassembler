@@ -5,11 +5,11 @@
 
 typedef struct CheckIdentifier CheckIdentifier;
 struct CheckIdentifier{
-  int (*execute)(uint8_t *code);    // a function
+  char* (*execute)(uint8_t *code);    // a function
   int a;
   int d;
 };
-int addwf (uint8_t *code,CheckIdentifier* ci);
+char* addwf (uint8_t *code/*,CheckIdentifier* ci*/);
 char *disassembler (uint32_t code);
 extern CheckIdentifier opcodeTable[];
 #endif // _DISASSEMBLER_H
