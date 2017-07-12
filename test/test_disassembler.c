@@ -173,3 +173,17 @@ void test_dcfsnz_expect_wrong(void)
   TEST_ASSERT_EQUAL_STRING("dcfsnz  0x59 f,BANKED",result);
   free(result);
 }
+
+void test_incf_expect_correct(void)
+{
+  char* result = disassembler(0x2959);
+  TEST_ASSERT_EQUAL_STRING("incf  0x59 WREG,BANKED",result);
+  free(result);
+}
+
+void test_incf_expect_wrong(void)
+{
+  char* result = disassembler(0x2A59);
+  TEST_ASSERT_EQUAL_STRING("incf  0x59 f,BANKED",result);
+  free(result);
+}

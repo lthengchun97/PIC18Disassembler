@@ -51,11 +51,12 @@ CheckIdentifier opcodeTable[256] = {
   [0x4E]={dcfsnz},
   [0x4F]={dcfsnz},
 
-  /*
+
   [0x28]={incf},
   [0x29]={incf},
   [0x2A]={incf},
   [0x2B]={incf},
+  /*
   [0x3C]={incfsz},
   [0x3D]={incfsz},
   [0x3E]={incfsz},
@@ -364,10 +365,36 @@ char* dcfsnz(uint8_t *code)
   return buffer;
 }
 
+
+char* incf(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  int differentiate = ad(opcode);
+
+  if(differentiate == 00)
+  {
+    printf("incf  0x%2x WREG,ACCESS",next_8);
+    sprintf(buffer,"incf  0x%2x WREG,ACCESS",next_8);
+  }
+  else if(differentiate == 01)
+  {
+    printf("incf  0x%2x WREG,BANKED",next_8);
+    sprintf(buffer,"incf  0x%2x WREG,BANKED",next_8);
+  }
+  else if(differentiate == 10)
+  {
+    printf("incf  0x%2x f,ACCESS",next_8);
+    sprintf(buffer,"incf  0x%2x f,ACCESS",next_8);
+  }
+  else
+  {
+    printf("incf  0x%2x f,BANKED",next_8);
+    sprintf(buffer,"incf  0x%2x f,BANKED",next_8);
+  }
+  return buffer;
+}
 /*
-char* incf(uint8_t *code){
-  return NULL;
-};
 char* incfsz(uint8_t *code){
   return NULL;
 };

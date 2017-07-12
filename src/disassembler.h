@@ -24,8 +24,8 @@ char* cpfslt(uint8_t *code);
 char* decf(uint8_t *code);
 char* decfsz(uint8_t *code);
 char* dcfsnz(uint8_t *code);
-/*
 char* incf(uint8_t *code);
+/*
 char* incfsz(uint8_t *code);
 char* infsnz(uint8_t *code);
 char* iorwf(uint8_t *code);
