@@ -113,7 +113,7 @@ void test_cpfsgt_expect_correct(void)
 
 void test_cpfsgt_expect_wrong(void)
 {
-  char* result = disassembler(0x6559);
+  char* result = disassembler(0x6E59);
   TEST_ASSERT_EQUAL_STRING("cpfsgt  0x59 ACCESS",result);
   free(result);
 }
@@ -185,5 +185,26 @@ void test_incf_expect_wrong(void)
 {
   char* result = disassembler(0x2A59);
   TEST_ASSERT_EQUAL_STRING("incf  0x59 f,BANKED",result);
+  free(result);
+}
+
+void test_btg_expect_wrong(void)
+{
+  char* result = disassembler(0x8659);
+  TEST_ASSERT_EQUAL_STRING("btg  0x59 6,ACCESS",result);
+  free(result);
+}
+
+void test_bc_expect_wrong(void)
+{
+  char* result = disassembler(0x4439);
+  TEST_ASSERT_EQUAL_STRING("bc 0x59",result);
+  free(result);
+}
+
+void test_tblrd_expect_wrong(void)
+{
+  char* result = disassembler(0x00ff);
+  TEST_ASSERT_EQUAL_STRING("TBLRD*",result);
   free(result);
 }
