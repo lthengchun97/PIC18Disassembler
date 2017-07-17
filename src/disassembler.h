@@ -6,6 +6,9 @@
 
 uint8_t next_8;
 uint8_t opcode;
+uint8_t thirdcode;
+uint8_t forthcode;
+
 typedef struct CheckIdentifier CheckIdentifier;
 
 struct CheckIdentifier{
@@ -15,7 +18,7 @@ char* (*execute)(uint8_t *code);    // a function
 int ad(uint8_t code);
 int a(uint8_t code);
 int bbb(uint8_t code);
-char* addwf (uint8_t *code/*,CheckIdentifier* ci*/);
+char* addwf (uint8_t *code);
 char* addwfc(uint8_t *code);
 char* andwf(uint8_t *code);
 char* clrf(uint8_t *code);
@@ -58,6 +61,16 @@ char* bnov(uint8_t *code);
 char* bnz(uint8_t *code);
 char* bov(uint8_t *code);
 char* zero(uint8_t *code);
+char* addlw(uint8_t *code);
+char* andlw(uint8_t *code);
+char* iorlw(uint8_t *code);
+char* movlw(uint8_t *code);
+char* mullw(uint8_t *code);
+char* retlw(uint8_t *code);
+char* sublw(uint8_t *code);
+char* xorlw(uint8_t *code);
+char* movlb(uint8_t *code);
+char* nop1(uint8_t *code);
 char* disassembler (uint32_t code);
 extern CheckIdentifier opcodeTable[];
 #endif // _DISASSEMBLER_H

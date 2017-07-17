@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 CheckIdentifier opcodeTable[256] = {
   [0x00]={zero},
@@ -9,60 +10,46 @@ CheckIdentifier opcodeTable[256] = {
   [0x25]={addwf},
   [0x26]={addwf},
   [0x27]={addwf},
-
   [0x20]={addwfc},
   [0x21]={addwfc},
   [0x22]={addwfc},
   [0x23]={addwfc},
-
   [0x14]={andwf},
   [0x15]={andwf},
   [0x16]={andwf},
   [0x17]={andwf},
-
   [0x6A]={clrf},
   [0x6B]={clrf},
-
   [0x1C]={comf},
   [0x1D]={comf},
   [0x1E]={comf},
   [0x1F]={comf},
-
   [0x62]={cpfseq},
   [0x63]={cpfseq},
-
   [0x64]={cpfsgt},
   [0x65]={cpfsgt},
-
   [0x60]={cpfslt},
   [0x61]={cpfslt},
-
   [0x04]={decf},
   [0x05]={decf},
   [0x06]={decf},
   [0x07]={decf},
-
   [0x2C]={decfsz},
   [0x2D]={decfsz},
   [0x2E]={decfsz},
   [0x2F]={decfsz},
-
   [0x4C]={dcfsnz},
   [0x4D]={dcfsnz},
   [0x4E]={dcfsnz},
   [0x4F]={dcfsnz},
-
-
   [0x28]={incf},
   [0x29]={incf},
   [0x2A]={incf},
   [0x2B]={incf},
-
   [0x3C]={incfsz},
   [0x3D]={incfsz},
   [0x3E]={incfsz},
   [0x3F]={incfsz},
-
   [0x48]={infsnz},
   [0x49]={infsnz},
   [0x4A]={infsnz},
@@ -74,7 +61,7 @@ CheckIdentifier opcodeTable[256] = {
   [0x50]={movf},
   [0x51]={movf},
   [0x52]={movf},
-  [0x53]={movf},      // STOP AT movf
+  [0x53]={movf},
   [0x6E]={movwf},
   [0x6F]={movwf},
   [0x02]={mulwf},
@@ -137,7 +124,6 @@ CheckIdentifier opcodeTable[256] = {
   [0x9D]={bcf},
   [0x9E]={bcf},
   [0x9F]={bcf},
-
   [0x80]={bsf},
   [0x81]={bsf},
   [0x82]={bsf},
@@ -154,7 +140,6 @@ CheckIdentifier opcodeTable[256] = {
   [0x8D]={bsf},
   [0x8E]={bsf},
   [0x8F]={bsf},
-
   [0xB0]={btfsc},
   [0xB1]={btfsc},
   [0xB2]={btfsc},
@@ -171,7 +156,6 @@ CheckIdentifier opcodeTable[256] = {
   [0xBD]={btfsc},
   [0xBE]={btfsc},
   [0xBF]={btfsc},
-
   [0xA0]={btfss},
   [0xA1]={btfss},
   [0xA2]={btfss},
@@ -188,7 +172,6 @@ CheckIdentifier opcodeTable[256] = {
   [0xAD]={btfss},
   [0xAE]={btfss},
   [0xAF]={btfss},
-
   [0x70]={btg},
   [0x71]={btg},
   [0x72]={btg},
@@ -205,7 +188,6 @@ CheckIdentifier opcodeTable[256] = {
   [0x7D]={btg},
   [0x7E]={btg},
   [0x7F]={btg},
-
   [0xE1]={bnz},
   [0xE2]={bc},
   [0xE3]={bnc},
@@ -213,18 +195,41 @@ CheckIdentifier opcodeTable[256] = {
   [0xE5]={bnov},
   [0xE6]={bn},
   [0xE7]={bnn},
-
+  [0x08]={sublw},
+  [0x09]={iorlw},
+  [0x0A]={xorlw},
+  [0x0B]={andlw},
+  [0x0C]={retlw},
+  [0x0D]={mullw},
+  [0x0E]={movlw},
+  [0x0F]={addlw},
+  [0x01]={movlb},
+  [0xF0]={nop1},
+  [0xF1]={nop1},
+  [0xF2]={nop1},
+  [0xF3]={nop1},
+  [0xF4]={nop1},
+  [0xF5]={nop1},
+  [0xF6]={nop1},
+  [0xF7]={nop1},
+  [0xF8]={nop1},
+  [0xF9]={nop1},
+  [0xFA]={nop1},
+  [0xFC]={nop1},
+  [0xFD]={nop1},
+  [0xFE]={nop1},
+  [0xFF]={nop1},
 };
 
 
   char* disassembler (uint32_t code)
 {
   opcode = code >> 8;
-  next_8 = code & 0x00ff;
+  next_8 = code & 0x00FF;
   opcodeTable[opcode].execute(opcode);
 }
 
-char* addwf (uint8_t *code/*,CheckIdentifier* ci*/)
+char* addwf (uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
@@ -1264,6 +1269,106 @@ char* zero(uint8_t *code)
     printf("error , no such opcode to display");
     sprintf(buffer,"error , no such opcode to display");
   }
+  return buffer;
+}
+
+char* addlw(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  printf("addlw %#4x",next_8);
+  sprintf(buffer,"addlw %#4x",next_8);
+  return buffer;
+}
+
+char* andlw(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  printf("andlw %#4x",next_8);
+  sprintf(buffer,"andlw %#4x",next_8);
+  return buffer;
+}
+
+char* iorlw(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  printf("iorlw %#4x",next_8);
+  sprintf(buffer,"iorlw %#4x",next_8);
+  return buffer;
+}
+
+char* movlw(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  printf("movlw %#4x",next_8);
+  sprintf(buffer,"movlw %#4x",next_8);
+  return buffer;
+}
+
+char* mullw(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  printf("mullw %#4x",next_8);
+  sprintf(buffer,"mullw %#4x",next_8);
+  return buffer;
+}
+
+char* retlw(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  printf("retlw %#4x",next_8);
+  sprintf(buffer,"retlw %#4x",next_8);
+  return buffer;
+}
+
+char* sublw(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  printf("sublw %#4x",next_8);
+  sprintf(buffer,"sublw %#4x",next_8);
+  return buffer;
+}
+
+char* xorlw(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  printf("xorlw %#4x",next_8);
+  sprintf(buffer,"xorlw %#4x",next_8);
+  return buffer;
+}
+
+char* movlb(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  thirdcode = (next_8 >> 4) & 0x0F;
+  forthcode = next_8 & 0x0F;
+  if(thirdcode == 0x0)
+  {
+    printf("movlb%#4x",forthcode);
+    sprintf(buffer,"movlb%#4x",forthcode);
+  }
+  else
+  {
+    printf("error, no such opcode");
+    sprintf(buffer,"error, no such opcode");
+  }
+  return buffer;
+}
+
+char* nop1(uint8_t *code)
+{
+  char *buffer;
+  buffer = malloc(1028);
+  printf("nop");
+  sprintf(buffer,"nop");
   return buffer;
 }
 

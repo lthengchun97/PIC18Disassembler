@@ -198,7 +198,7 @@ void test_btg_expect_wrong(void)
 void test_bc_expect_wrong(void)
 {
   char* result = disassembler(0x4439);
-  TEST_ASSERT_EQUAL_STRING("bc 0x59",result);
+  TEST_ASSERT_EQUAL_STRING("bc  0x59",result);
   free(result);
 }
 
@@ -206,5 +206,26 @@ void test_tblrd_expect_wrong(void)
 {
   char* result = disassembler(0x00ff);
   TEST_ASSERT_EQUAL_STRING("TBLRD*",result);
+  free(result);
+}
+
+void test_addlw_expect_correct(void)
+{
+  char* result = disassembler(0x0F58);
+  TEST_ASSERT_EQUAL_STRING("addlw 0x58",result);
+  free(result);
+}
+
+void test_movlb_expect_wrong(void)
+{
+  char* result = disassembler(0x010F);
+  TEST_ASSERT_EQUAL_STRING("movlb 0xf",result);
+  free(result);
+}
+
+void test_nop2_exoect_correct(void)
+{
+  char* result = disassembler(0xffFF);
+  TEST_ASSERT_EQUAL_STRING("nop",result);
   free(result);
 }
