@@ -3,230 +3,374 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include "CException.h"
+#include "Exception.h"
+
+#define KB 1024
+
+char codePtr[8*KB];
+char memory[20*KB];
 
 CheckIdentifier opcodeTable[256] = {
-  [0x00]={zero},
-  [0x24]={addwf},
-  [0x25]={addwf},
-  [0x26]={addwf},
-  [0x27]={addwf},
-  [0x20]={addwfc},
-  [0x21]={addwfc},
-  [0x22]={addwfc},
-  [0x23]={addwfc},
-  [0x14]={andwf},
-  [0x15]={andwf},
-  [0x16]={andwf},
-  [0x17]={andwf},
-  [0x6A]={clrf},
-  [0x6B]={clrf},
-  [0x1C]={comf},
-  [0x1D]={comf},
-  [0x1E]={comf},
-  [0x1F]={comf},
-  [0x62]={cpfseq},
-  [0x63]={cpfseq},
-  [0x64]={cpfsgt},
-  [0x65]={cpfsgt},
-  [0x60]={cpfslt},
-  [0x61]={cpfslt},
-  [0x04]={decf},
-  [0x05]={decf},
-  [0x06]={decf},
-  [0x07]={decf},
-  [0x2C]={decfsz},
-  [0x2D]={decfsz},
-  [0x2E]={decfsz},
-  [0x2F]={decfsz},
-  [0x4C]={dcfsnz},
-  [0x4D]={dcfsnz},
-  [0x4E]={dcfsnz},
-  [0x4F]={dcfsnz},
-  [0x28]={incf},
-  [0x29]={incf},
-  [0x2A]={incf},
-  [0x2B]={incf},
-  [0x3C]={incfsz},
-  [0x3D]={incfsz},
-  [0x3E]={incfsz},
-  [0x3F]={incfsz},
-  [0x48]={infsnz},
-  [0x49]={infsnz},
-  [0x4A]={infsnz},
-  [0x4B]={infsnz},
-  [0x10]={iorwf},
-  [0x11]={iorwf},
-  [0x12]={iorwf},
-  [0x13]={iorwf},
-  [0x50]={movf},
-  [0x51]={movf},
-  [0x52]={movf},
-  [0x53]={movf},
-  [0x6E]={movwf},
-  [0x6F]={movwf},
-  [0x02]={mulwf},
-  [0x03]={mulwf},
-  [0x6C]={negf},
-  [0x6D]={negf},
-  [0x34]={rlcf},
-  [0x35]={rlcf},
-  [0x36]={rlcf},
-  [0x37]={rlcf},
-  [0x44]={rlncf},
-  [0x45]={rlncf},
-  [0x46]={rlncf},
-  [0x47]={rlncf},
-  [0x30]={rrcf},
-  [0x31]={rrcf},
-  [0x32]={rrcf},
-  [0x33]={rrcf},
-  [0x40]={rrncf},
-  [0x41]={rrncf},
-  [0x42]={rrncf},
-  [0x43]={rrncf},
-  [0x68]={setf},
-  [0x69]={setf},
-  [0x54]={subfwb},
-  [0x55]={subfwb},
-  [0x56]={subfwb},
-  [0x57]={subfwb},
-  [0x5C]={subwf},
-  [0x5D]={subwf},
-  [0x5E]={subwf},
-  [0x5F]={subwf},
-  [0x58]={subwfb},
-  [0x59]={subwfb},
-  [0x5A]={subwfb},
-  [0x5B]={subwfb},
-  [0x38]={swapf},
-  [0x39]={swapf},
-  [0x3A]={swapf},
-  [0x3B]={swapf},
-  [0x67]={tstfsz},
-  [0x68]={tstfsz},
-  [0x18]={xorwf},
-  [0x19]={xorwf},
-  [0x1A]={xorwf},
-  [0x1B]={xorwf},
-  [0x90]={bcf},
-  [0x91]={bcf},
-  [0x92]={bcf},
-  [0x93]={bcf},
-  [0x94]={bcf},
-  [0x95]={bcf},
-  [0x96]={bcf},
-  [0x97]={bcf},
-  [0x98]={bcf},
-  [0x99]={bcf},
-  [0x9A]={bcf},
-  [0x9B]={bcf},
-  [0x9C]={bcf},
-  [0x9D]={bcf},
-  [0x9E]={bcf},
-  [0x9F]={bcf},
-  [0x80]={bsf},
-  [0x81]={bsf},
-  [0x82]={bsf},
-  [0x83]={bsf},
-  [0x84]={bsf},
-  [0x85]={bsf},
-  [0x86]={bsf},
-  [0x87]={bsf},
-  [0x88]={bsf},
-  [0x89]={bsf},
-  [0x8A]={bsf},
-  [0x8B]={bsf},
-  [0x8C]={bsf},
-  [0x8D]={bsf},
-  [0x8E]={bsf},
-  [0x8F]={bsf},
-  [0xB0]={btfsc},
-  [0xB1]={btfsc},
-  [0xB2]={btfsc},
-  [0xB3]={btfsc},
-  [0xB4]={btfsc},
-  [0xB5]={btfsc},
-  [0xB6]={btfsc},
-  [0xB7]={btfsc},
-  [0xB8]={btfsc},
-  [0xB9]={btfsc},
-  [0xBA]={btfsc},
-  [0xBB]={btfsc},
-  [0xBC]={btfsc},
-  [0xBD]={btfsc},
-  [0xBE]={btfsc},
-  [0xBF]={btfsc},
-  [0xA0]={btfss},
-  [0xA1]={btfss},
-  [0xA2]={btfss},
-  [0xA3]={btfss},
-  [0xA4]={btfss},
-  [0xA5]={btfss},
-  [0xA6]={btfss},
-  [0xA7]={btfss},
-  [0xA8]={btfss},
-  [0xA9]={btfss},
-  [0xAA]={btfss},
-  [0xAB]={btfss},
-  [0xAC]={btfss},
-  [0xAD]={btfss},
-  [0xAE]={btfss},
-  [0xAF]={btfss},
-  [0x70]={btg},
-  [0x71]={btg},
-  [0x72]={btg},
-  [0x73]={btg},
-  [0x74]={btg},
-  [0x75]={btg},
-  [0x76]={btg},
-  [0x77]={btg},
-  [0x78]={btg},
-  [0x79]={btg},
-  [0x7A]={btg},
-  [0x7B]={btg},
-  [0x7C]={btg},
-  [0x7D]={btg},
-  [0x7E]={btg},
-  [0x7F]={btg},
-  [0xE1]={bnz},
-  [0xE2]={bc},
-  [0xE3]={bnc},
-  [0xE4]={bov},
-  [0xE5]={bnov},
-  [0xE6]={bn},
-  [0xE7]={bnn},
-  [0x08]={sublw},
-  [0x09]={iorlw},
-  [0x0A]={xorlw},
-  [0x0B]={andlw},
-  [0x0C]={retlw},
-  [0x0D]={mullw},
-  [0x0E]={movlw},
-  [0x0F]={addlw},
-  [0x01]={movlb},
-  [0xF0]={nop1},
-  [0xF1]={nop1},
-  [0xF2]={nop1},
-  [0xF3]={nop1},
-  [0xF4]={nop1},
-  [0xF5]={nop1},
-  [0xF6]={nop1},
-  [0xF7]={nop1},
-  [0xF8]={nop1},
-  [0xF9]={nop1},
-  [0xFA]={nop1},
-  [0xFC]={nop1},
-  [0xFD]={nop1},
-  [0xFE]={nop1},
-  [0xFF]={nop1},
+
+  [0x00]={zero, 2},
+  [0x24]={addwf,2},
+  [0x25]={addwf,2},
+  [0x26]={addwf,2},
+  [0x27]={addwf,2},
+  [0x20]={addwfc,2},
+  [0x21]={addwfc,2},
+  [0x22]={addwfc,2},
+  [0x23]={addwfc,2},
+  [0x14]={andwf,2},
+  [0x16]={andwf,2},
+  [0x15]={andwf,2},
+  [0x17]={andwf,2},
+  [0x6B]={clrf,2},
+  [0x6A]={clrf,2},
+  [0x1C]={comf,2},
+  [0x1D]={comf,2},
+  [0x1E]={comf,2},
+  [0x1F]={comf,2},
+  [0x62]={cpfseq,2},
+  [0x63]={cpfseq,2},
+  [0x64]={cpfsgt,2},
+  [0x65]={cpfsgt,2},
+  [0x60]={cpfslt,2},
+  [0x61]={cpfslt,2},
+  [0x04]={decf,2},
+  [0x05]={decf,2},
+  [0x06]={decf,2},
+  [0x07]={decf,2},
+  [0x2C]={decfsz,2},
+  [0x2D]={decfsz,2},
+  [0x2E]={decfsz,2},
+  [0x2F]={decfsz,2},
+  [0x4C]={dcfsnz,2},
+  [0x4D]={dcfsnz,2},
+  [0x4E]={dcfsnz,2},
+  [0x4F]={dcfsnz,2},
+  [0x28]={incf,2},
+  [0x29]={incf,2},
+  [0x2A]={incf,2},
+  [0x2B]={incf,2},
+  [0x3C]={incfsz,2},
+  [0x3D]={incfsz,2},
+  [0x3E]={incfsz,2},
+  [0x3F]={incfsz,2},
+  [0x48]={infsnz,2},
+  [0x49]={infsnz,2},
+  [0x4A]={infsnz,2},
+  [0x4B]={infsnz,2},
+  [0x10]={iorwf,2},
+  [0x11]={iorwf,2},
+  [0x12]={iorwf,2},
+  [0x13]={iorwf,2},
+  [0x50]={movf,2},
+  [0x51]={movf,2},
+  [0x52]={movf,2},
+  [0x53]={movf,2},
+  [0x6E]={movwf,2},
+  [0x6F]={movwf,2},
+  [0x02]={mulwf,2},
+  [0x03]={mulwf,2},
+  [0x6C]={negf,2},
+  [0x6D]={negf,2},
+  [0x34]={rlcf,2},
+  [0x35]={rlcf,2},
+  [0x36]={rlcf,2},
+  [0x37]={rlcf,2},
+  [0x44]={rlncf,2},
+  [0x45]={rlncf,2},
+  [0x46]={rlncf,2},
+  [0x47]={rlncf,2},
+  [0x30]={rrcf,2},
+  [0x31]={rrcf,2},
+  [0x32]={rrcf,2},
+  [0x33]={rrcf,2},
+  [0x40]={rrncf,2},
+  [0x41]={rrncf,2},
+  [0x42]={rrncf,2},
+  [0x43]={rrncf,2},
+  [0x68]={setf,2},
+  [0x69]={setf,2},
+  [0x54]={subfwb,2},
+  [0x55]={subfwb,2},
+  [0x56]={subfwb,2},
+  [0x57]={subfwb,2},
+  [0x5C]={subwf,2},
+  [0x5D]={subwf,2},
+  [0x5E]={subwf,2},
+  [0x5F]={subwf,2},
+  [0x58]={subwfb,2},
+  [0x59]={subwfb,2},
+  [0x5A]={subwfb,2},
+  [0x5B]={subwfb,2},
+  [0x38]={swapf,2},
+  [0x39]={swapf,2},
+  [0x3A]={swapf,2},
+  [0x3B]={swapf,2},
+  [0x67]={tstfsz,2},
+  [0x68]={tstfsz,2},
+  [0x18]={xorwf,2},
+  [0x19]={xorwf,2},
+  [0x1A]={xorwf,2},
+  [0x1B]={xorwf,2},
+  [0x90]={bcf,2},
+  [0x91]={bcf,2},
+  [0x92]={bcf,2},
+  [0x93]={bcf,2},
+  [0x94]={bcf,2},
+  [0x95]={bcf,2},
+  [0x96]={bcf,2},
+  [0x97]={bcf,2},
+  [0x98]={bcf,2},
+  [0x99]={bcf,2},
+  [0x9A]={bcf,2},
+  [0x9B]={bcf,2},
+  [0x9C]={bcf,2},
+  [0x9D]={bcf,2},
+  [0x9E]={bcf,2},
+  [0x9F]={bcf,2},
+  [0x80]={bsf,2},
+  [0x81]={bsf,2},
+  [0x82]={bsf,2},
+  [0x83]={bsf,2},
+  [0x84]={bsf,2},
+  [0x85]={bsf,2},
+  [0x86]={bsf,2},
+  [0x87]={bsf,2},
+  [0x88]={bsf,2},
+  [0x89]={bsf,2},
+  [0x8A]={bsf,2},
+  [0x8B]={bsf,2},
+  [0x8C]={bsf,2},
+  [0x8D]={bsf,2},
+  [0x8E]={bsf,2},
+  [0x8F]={bsf,2},
+  [0xB0]={btfsc,2},
+  [0xB1]={btfsc,2},
+  [0xB2]={btfsc,2},
+  [0xB3]={btfsc,2},
+  [0xB4]={btfsc,2},
+  [0xB5]={btfsc,2},
+  [0xB6]={btfsc,2},
+  [0xB7]={btfsc,2},
+  [0xB8]={btfsc,2},
+  [0xB9]={btfsc,2},
+  [0xBA]={btfsc,2},
+  [0xBB]={btfsc,2},
+  [0xBC]={btfsc,2},
+  [0xBD]={btfsc,2},
+  [0xBE]={btfsc,2},
+  [0xBF]={btfsc,2},
+  [0xA0]={btfss,2},
+  [0xA1]={btfss,2},
+  [0xA2]={btfss,2},
+  [0xA3]={btfss,2},
+  [0xA4]={btfss,2},
+  [0xA5]={btfss,2},
+  [0xA6]={btfss,2},
+  [0xA7]={btfss,2},
+  [0xA8]={btfss,2},
+  [0xA9]={btfss,2},
+  [0xAA]={btfss,2},
+  [0xAB]={btfss,2},
+  [0xAC]={btfss,2},
+  [0xAD]={btfss,2},
+  [0xAE]={btfss,2},
+  [0xAF]={btfss,2},
+  [0x70]={btg,2},
+  [0x71]={btg,2},
+  [0x72]={btg,2},
+  [0x73]={btg,2},
+  [0x74]={btg,2},
+  [0x75]={btg,2},
+  [0x76]={btg,2},
+  [0x77]={btg,2},
+  [0x78]={btg,2},
+  [0x79]={btg,2},
+  [0x7A]={btg,2},
+  [0x7B]={btg,2},
+  [0x7C]={btg,2},
+  [0x7D]={btg,2},
+  [0x7E]={btg,2},
+  [0x7F]={btg,2},
+  [0xE1]={bnz,2},
+  [0xE2]={bc,2},
+  [0xE3]={bnc,2},
+  [0xE4]={bov,2},
+  [0xE5]={bnov,2},
+  [0xE6]={bn,2},
+  [0xE7]={bnn,2},
+  [0x08]={sublw,2},
+  [0x09]={iorlw,2},
+  [0x0A]={xorlw,2},
+  [0x0B]={andlw,2},
+  [0x0C]={retlw,2},
+  [0x0D]={mullw,2},
+  [0x0E]={movlw,2},
+  [0x0F]={addlw,2},
+  [0x01]={movlb,2},
+  [0xF0]={nop1,2},
+  [0xF1]={nop1,2},
+  [0xF2]={nop1,2},
+  [0xF3]={nop1,2},
+  [0xF4]={nop1,2},
+  [0xF5]={nop1,2},
+  [0xF6]={nop1,2},
+  [0xF7]={nop1,2},
+  [0xF8]={nop1,2},
+  [0xF9]={nop1,2},
+  [0xFA]={nop1,2},
+  [0xFC]={nop1,2},
+  [0xFD]={nop1,2},
+  [0xFE]={nop1,2},
+  [0xFF]={nop1,2},
+  [0xEC]={call,4},
+  [0xED]={call,4},
+  [0xEF]={goto1,4},
+  [0xEE]={lfsr,4},
+  [0xD8]={rcall,2},
+  [0xD9]={rcall,2},
+  [0xDA]={rcall,2},
+  [0xDB]={rcall,2},
+  [0xDC]={rcall,2},
+  [0xDD]={rcall,2},
+  [0xDE]={rcall,2},
+  [0xDF]={rcall,2},
+  [0xC0]={movff,4},
+  [0xC1]={movff,4},
+  [0xC2]={movff,4},
+  [0xC3]={movff,4},
+  [0xC4]={movff,4},
+  [0xC5]={movff,4},
+  [0xC6]={movff,4},
+  [0xC7]={movff,4},
+  [0xC8]={movff,4},
+  [0xC9]={movff,4},
+  [0xCA]={movff,4},
+  [0xCB]={movff,4},
+  [0xCC]={movff,4},
+  [0xCD]={movff,4},
+  [0xCE]={movff,4},
+  [0xCF]={movff,4},
+
 };
 
-
-  char* disassembler (uint32_t code)
+//                    uint8_t *code)
+  char* disassembler (uint8_t **codePtrPtr)
 {
-  opcode = code >> 8;
-  next_8 = code & 0x00FF;
-  opcodeTable[opcode].execute(opcode);
+  uint8_t *codePtr = *codePtrPtr;
+  // codePtr use for checking the bytes
+  upperByte = codePtr[0];     // 1st byte
+  next_8 = codePtr[1];        // 2nd byte
+  next_16 = codePtr[2];       // 3rd byte
+  next_32=codePtr[3];         // 4th byte
+
+
+  if(opcodeTable[upperByte].execute == 0)
+  {
+    Throw(createException("invalid opcode",upperByte));
+  }
+  else
+  {
+    printf("size of the instruction = %d\n",opcodeTable[upperByte].size );
+    return opcodeTable[upperByte].execute(codePtr);
+    *codePtrPtr += opcodeTable[upperByte].size;
+  }
+}
+
+char* printError(uint8_t *code){
+
+ CEXCEPTION_T ex;
+ Try{
+  }
+  Catch(ex){
+    dumpException(ex);
+  }
+}
+
+char *movff(uint8_t *code)
+{
+  char *buffer;
+  buffer = malloc(1028);
+  upperByte = upperByte & 0x0F;
+  uint8_t movff_test = (next_16 >> 4) & 0x0F;
+  next_16 = next_16 & 0x0F;
+  if(movff_test == 0xF)
+  {
+    sprintf(buffer,"movff %#4x%2x,%#4x%2x",upperByte,next_8,next_16,next_32);
+    printf("%s",buffer);
+  }
+  else
+  {
+    sprintf(buffer,"invalid");
+  }
+  return buffer;
+}
+
+char *rcall(uint8_t *code)
+{
+  char *buffer;
+  buffer = malloc(1028);
+  upperByte = upperByte &0x07;
+  sprintf(buffer,"rcall %#4x%2x",upperByte,next_8);
+  printf("%s",buffer);
+  return buffer;
+}
+
+char* call(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  next_16 = next_16 & 0xF0;
+  if(next_16 == 0xF0)
+    {
+      sprintf(buffer,"call 0x%2x\nnop 0x%2x",next_8,next_32);
+      printf("%s",buffer);
+    }
+  else
+  {
+    sprintf(buffer,"invalid");
+  }
+  return buffer;
+}
+
+char* goto1(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  next_16 = next_16 & 0xF0;
+  if(next_16 == 0xF0)
+    {
+      sprintf(buffer,"goto 0x%2x\nnop 0x%2x",next_8,next_32);
+      printf("%s",buffer);
+    }
+  else
+  {
+    sprintf(buffer,"invalid");
+  }
+  return buffer;
+}
+
+char* lfsr(uint8_t *code)
+{
+  char* buffer;
+  buffer = malloc(1028);
+  next_16 = next_16 & 0xFF;
+  //next_8 = next_8 >> 4;
+  //next_8 = next_8 & 0x03;
+  if(next_16 == 0xF0)
+    {
+      sprintf(buffer,"lfsr 0x%2x, 0x%2x",next_8,next_32);
+      printf("%s",buffer);
+    }
+  else
+  {
+    sprintf(buffer,"invalid");
+  }
+  return buffer;
 }
 
 char* addwf (uint8_t *code)
@@ -1266,7 +1410,7 @@ char* zero(uint8_t *code)
   }
   else
   {
-    printf("error , no such opcode to display");
+    //printf("error , no such opcode to display");
     sprintf(buffer,"error , no such opcode to display");
   }
   return buffer;
@@ -1374,7 +1518,7 @@ char* nop1(uint8_t *code)
 
 int ad(uint8_t code)
 {
-  uint8_t adcode = code & 0x03;
+  uint8_t adcode = upperByte & 0x03;
   if(adcode == 0x00)
   {
     return 00;
@@ -1395,7 +1539,7 @@ int ad(uint8_t code)
 
 int a(uint8_t code)
 {
-  uint8_t adcode = code & 0x01;
+  uint8_t adcode = upperByte & 0x01;
   if(adcode == 0x00)
   {
     return 0;
@@ -1408,7 +1552,7 @@ int a(uint8_t code)
 
 int bbb(uint8_t code)
 {
-  uint8_t adcode = code & 0x0E;
+  uint8_t adcode = upperByte & 0x0E;
   if(adcode == 0x00)
   {
     return 0;
