@@ -43,6 +43,8 @@
   :test:
     - *common_defines
     - TEST
+    - _ISOC99_SOURCE
+    - CEXCEPTION_USE_CONFIG_FILE
   :test_preprocess:
     - *common_defines
     - TEST

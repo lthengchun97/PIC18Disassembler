@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 uint8_t next_8;
 uint8_t opcode;
@@ -81,5 +82,6 @@ char* lfsr(uint8_t *code);
 char* rcall(uint8_t *code);
 char* movff(uint8_t *code);
 char* disassembler (uint8_t **codePtrPtr);
+char* disassembleNBytes(uint8_t **codePtrPtr, int nBytes);
 extern CheckIdentifier opcodeTable[];
 #endif // _DISASSEMBLER_H

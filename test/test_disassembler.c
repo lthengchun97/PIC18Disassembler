@@ -7,6 +7,7 @@
 #include "Exception.h"
 #include "CException.h"
 #include "CExceptionConfig.h"
+#include <stdarg.h>
 
 void setUp(void)
 {
@@ -18,16 +19,21 @@ void tearDown(void)
 
 void test_movff_expect_wrong(void)
 {
-  uint8_t memory[]={0xCA,0x55,0xFA,0x59};
+  uint8_t memory[]={0x5A,0x55,0xFA,0x59,0x55,0x66,0x58,0x98};
   uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("addwf  0x59 WREG,BANKED",result);
+
+
+  char* result = disassembleNBytes(&codePtr,4);
+
+  //TEST_ASSERT_EQUAL_STRING("addwf  0x59 WREG,BANKED",result);
+  TEST_ASSERT_EQUAL(8, codePtr - memory);
+  //TEST_ASSERT_EQUAL(4,codePtr);
   free(result);
 }
 
 void test_addwf_expect_wrong_given_correct_identifier_and_wrong_value(void)
 {
-  uint8_t memory[]={0x25,0x69};
+  uint8_t memory[]={0xE8,0x69};
   uint8_t *codePtr = memory;
   char* result = disassembler(&codePtr);
   TEST_ASSERT_EQUAL_STRING("addwf  0x59 WREG,BANKED",result);
