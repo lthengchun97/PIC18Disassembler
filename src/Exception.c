@@ -7,19 +7,34 @@
 #include <stdlib.h>
 
 
-Exception *createException(char *msg, uint8_t errorCode)
-{
+void throwException(int errorCode, void *data, char *message, ...) {
+  va_list args;
+  char *buffer;
+  int length;
   Exception *e;
-  e= malloc(sizeof(Exception));
-  e -> msg = msg;
-  e -> errorCode = errorCode;
+
+  va_start(args, message);
+  e = malloc(sizeof(Exception));
+
+  length = vsnprintf(buffer, 0, message, args);
+  buffer = malloc(length + 1);
+  vsnprintf(buffer, length, message, args);
+
+  e->msg = buffer;
+  e->errorCode = errorCode;
+  e->data = data;
+
   Throw(e);
+} 
+
+void freeException(Exception *e) {
+  if(e) {
+    if(e->msg)
+      free(e->msg);
+    free(e);
+  }
 }
 
-void freeException(Exception *e){
-  free(e);
-}
-
-void dumpException(Exception *e){
-  printf ("%s (err = %d)\n", e->msg, e->errorCode);
+void dumpException(Exception *e) {
+  printf("%s (err=%d)\n", e->msg, e->errorCode);
 }

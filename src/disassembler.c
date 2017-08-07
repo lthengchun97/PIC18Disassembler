@@ -263,22 +263,20 @@ CheckIdentifier opcodeTable[256] = {
  * Disassemble many instruction only
  */
 
-char* disassembleNBytes(uint8_t **codePtrPtr, int nBytes)
+char* disassembleNBytes(uint8_t **codePtrPtr, int nCodes)
 {
   uint8_t startCodePtr = codePtr[0];
-  char *str;
-  //str=malloc(1028);
+
+  char* str;
+  str=malloc(1028);
   int i;
-   for( i = 0 ; i < nBytes ; i++)
+   for( i = 0 ; i < nCodes ; i++)
    {
     str = disassembler(codePtrPtr);
-    *codePtrPtr += opcodeTable[upperByte].size;
-    //sprintf(str,disassembler(codePtrPtr));
    }
+   str = codeAlign(str);
    return str;
 }
-
-
 
 /**
  * Disassemble 1 instruction only
@@ -286,12 +284,13 @@ char* disassembleNBytes(uint8_t **codePtrPtr, int nBytes)
 char* disassembler(uint8_t **codePtrPtr)
 {
   uint8_t *codePtr = *codePtrPtr;
+
   // codePtr use for checking the bytes
-  if(opcodeTable[upperByte].size==4)
+  if(opcodeTable[codePtr[0]].size==4)
   {
-  upperByte =codePtr[0];     // 1st byte
-  next_8 =codePtr[1];        // 2nd byte
-  next_16 =codePtr[2];       // 3rd byte
+  upperByte=codePtr[0];     // 1st byte
+  next_8=codePtr[1];        // 2nd byte
+  next_16=codePtr[2];       // 3rd byte
   next_32=codePtr[3];         // 4th byte
   }
   else
@@ -300,30 +299,31 @@ char* disassembler(uint8_t **codePtrPtr)
     next_8 =codePtr[1];        // 2nd byte
   }
 
-  if(opcodeTable[upperByte].execute == 0)
+  if(opcodeTable[upperByte].execute == 0)       // Once detect the wrong instruction, it will stop ...
   {
     char* buffer = malloc(1028);
-    printf("Error!");
+    sprintf(buffer,"Invalid instruction. Cannot recognize upperByte of 0x%2x.",upperByte);
     // Invalid instruction. Cannot recognize 'xxxxx'.
-    sprintf(buffer,"This opcode 0x%2x cannot be used",upperByte);
+    // printf("Invalid instruction.This opcode 0x%2x cannot be use\n",upperByte);
     return buffer;
     //Throw(createException("invalid opcode %2x",upperByte));
   }
   else
   {
-    //printf("size of the instruction = %d\n",opcodeTable[upperByte].size );
-    return opcodeTable[upperByte].execute(codePtr);
+    char* buffer = malloc(1028);
     *codePtrPtr += opcodeTable[upperByte].size;
+    return opcodeTable[upperByte].execute(codePtr);
   }
 }
 
-char* printError(uint8_t *code){
- CEXCEPTION_T ex;
- Try{
-  }
-  Catch(ex){
-    dumpException(ex);
-  }
+char* codeAlign(char* displayOut, ...)
+{
+  va_list args;
+  char* buffer = malloc(1024);
+  int length;
+  va_start(args,displayOut);
+  length=vsnprintf(buffer,1024,displayOut,args);
+  return buffer;
 }
 
 char *movff(uint8_t *code)
@@ -336,10 +336,11 @@ char *movff(uint8_t *code)
   if(movff_test == 0xF)
   {
     sprintf(buffer,"movff %#4x%2x,%#4x%2x",upperByte,next_8,next_16,next_32);
-    printf("%s \n",buffer);
+    printf("%s\n",buffer);
   }
   else
   {
+    printf("invalid\n");
     sprintf(buffer,"invalid");
   }
   return buffer;
@@ -1092,22 +1093,22 @@ char* subwfb(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("subwfb  0x%2x WREG,ACCESS",next_8);
+    printf("subwfb  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"subwfb  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("subwfb  0x%2x WREG,BANKED",next_8);
+    printf("subwfb  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"subwfb  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("subwfb  0x%2x f,ACCESS",next_8);
+    printf("subwfb  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"subwfb  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("subwfb  0x%2x f,BANKED",next_8);
+    printf("subwfb  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"subwfb  0x%2x f,BANKED",next_8);
   }
   return buffer;

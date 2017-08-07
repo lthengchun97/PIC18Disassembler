@@ -8,6 +8,9 @@
 #include "CException.h"
 #include "CExceptionConfig.h"
 #include <stdarg.h>
+#include <string.h>
+#include "error.h"
+#include "Token.h"
 
 void setUp(void)
 {
@@ -19,18 +22,52 @@ void tearDown(void)
 
 void test_movff_expect_wrong(void)
 {
-  uint8_t memory[]={0x5A,0x55,0xFA,0x59,0x55,0x66,0x58,0x98};
+  CEXCEPTION_T ex = NULL;
+  uint8_t memory[]={0xC9,0x55,0xF5,0x88,0x9A,0x66,0x25,0x77};
+  char* show= "0xC9,0x55,0xF5,0x88,0xE9,0x66,0x25,0x77";
   uint8_t *codePtr = memory;
-
-
-  char* result = disassembleNBytes(&codePtr,4);
-
-  //TEST_ASSERT_EQUAL_STRING("addwf  0x59 WREG,BANKED",result);
-  TEST_ASSERT_EQUAL(8, codePtr - memory);
+  //char* strBuffer = malloc(strlen(result) + 1);
+  //strcpy(strBuffer, result);
+  //TEST_ASSERT_EQUAL_STRING("addwf  0x59 WREG,BANKED",strBuffer);
+  //TEST_ASSERT_EQUAL(8, codePtr - memory);               //compare number of bytes
+  //TEST_ASSERT_EQUAL(8, opcodeTable[upperByte].size);
   //TEST_ASSERT_EQUAL(4,codePtr);
+  OperatorToken token = {
+   .type = TOKEN_OPERATOR_TYPE,
+   .startColumn = 20,
+   .length = 4,
+   .originalStr = show,
+   .str = "0xE9",
+ };
+  Try {
+    throwException(ERR_INVALID_OPERAND, (void *)&token,                     \
+                   "Invalid opecode, opcode of %s cannot be usee",      \
+                    token.str);
+  } Catch(ex) {
+//    dumpException(ex);
+    dumpErrorMessage(ex, 1);
+  }
+  freeException(ex);
+  printf("OUTPUT:\n");
+  char* result = disassembleNBytes(&codePtr,3);
+  TEST_ASSERT_EQUAL_STRING("addwf  0x59 WREG,BANKED",result);
   free(result);
 }
 
+void dumpErrorMessage(CEXCEPTION_T ex, int lineNo) {
+  Token *token = (Token *)ex->data;
+  int i = token->length - 1;
+  if(i < 0) i = 0;
+
+  printf("Error %d:\n", lineNo);
+  printf("%s\n", ex->msg);
+  printf("%s\n", token->originalStr);
+  printf("%*s", token->startColumn + 1, "^");
+  while(i--)
+    printf("~");
+  putchar('\n');
+}
+/*
 void test_addwf_expect_wrong_given_correct_identifier_and_wrong_value(void)
 {
   uint8_t memory[]={0xE8,0x69};
@@ -300,3 +337,4 @@ void test_nop2_expect_correct(void)
   TEST_ASSERT_EQUAL_STRING("nop",result);
   free(result);
 }
+*/

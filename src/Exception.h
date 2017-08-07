@@ -6,16 +6,18 @@
 #include <ctype.h>
 #include <stdarg.h>
 typedef struct Exception Exception;
-typedef struct Exception* ExceptionPtr;
-
-
-struct Exception{               //If got more variable can add here
+typedef Exception* ExceptionPtr;
+struct Exception {
   char *msg;
-  uint8_t errorCode;
+  int  errorCode;
+  void *data;
 };
-Exception *createException(char *msg, uint8_t errorCode);
 
+Exception *createException(char *msg, int errorCode);
 void freeException(Exception *e);
 void dumpException(Exception *e);
+
+void throwException(int errorCode, void *data, char *message, ...);
+
 
 #endif // Exception_H
