@@ -268,20 +268,23 @@ char* disassembleNBytes(uint8_t **codePtrPtr, int nCodes)
   uint8_t startCodePtr = codePtr[0];
 
   char* str;
+  char* buff = malloc(1028);
   str=malloc(1028);
   int i;
    for( i = 0 ; i < nCodes ; i++)
    {
-    str = disassembler(codePtrPtr);
+    str = disassemble(codePtrPtr);
+    strcpy(buff,str);
    }
-   str = codeAlign(str);
+   //str = codeAlign(str);
+
    return str;
 }
 
 /**
  * Disassemble 1 instruction only
  */
-char* disassembler(uint8_t **codePtrPtr)
+char* disassemble(uint8_t **codePtrPtr)
 {
   uint8_t *codePtr = *codePtrPtr;
 
@@ -304,9 +307,8 @@ char* disassembler(uint8_t **codePtrPtr)
     char* buffer = malloc(1028);
     sprintf(buffer,"Invalid instruction. Cannot recognize upperByte of 0x%2x.",upperByte);
     // Invalid instruction. Cannot recognize 'xxxxx'.
-    // printf("Invalid instruction.This opcode 0x%2x cannot be use\n",upperByte);
+    //printf("Invalid instruction.This opcode 0x%2x cannot be use\n",upperByte);
     return buffer;
-    //Throw(createException("invalid opcode %2x",upperByte));
   }
   else
   {
@@ -1201,12 +1203,12 @@ char* bcf(uint8_t *code)
 
   if(differentiate == 0)
   {
-    printf("bcf  %#4x %d,ACCESS",next_8,getB);
+    printf("bcf  %#4x %d,ACCESS\n",next_8,getB);
     sprintf(buffer,"bcf  %#4x %d,ACCESS",next_8,getB);
   }
   else
   {
-    printf("bcf  %#4x %d,BANKED",next_8,getB);
+    printf("bcf  %#4x %d,BANKED\n",next_8,getB);
     sprintf(buffer,"bcf  %#4x %d,BANKED",next_8,getB);
   }
   return buffer;

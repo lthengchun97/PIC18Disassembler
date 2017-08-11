@@ -81,7 +81,7 @@ char* goto1(uint8_t *code);
 char* lfsr(uint8_t *code);
 char* rcall(uint8_t *code);
 char* movff(uint8_t *code);
-char* disassembler (uint8_t **codePtrPtr);
+char* disassemble (uint8_t **codePtrPtr);
 char* disassembleNBytes(uint8_t **codePtrPtr, int nBytes);
 char* codeAlign(char* displayOut, ...);
 extern CheckIdentifier opcodeTable[];

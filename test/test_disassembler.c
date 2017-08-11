@@ -23,15 +23,12 @@ void tearDown(void)
 void test_movff_expect_wrong(void)
 {
   CEXCEPTION_T ex = NULL;
-  uint8_t memory[]={0xC9,0x55,0xF5,0x88,0x9A,0x66,0x25,0x77};
-  char* show= "0xC9,0x55,0xF5,0x88,0xE9,0x66,0x25,0x77";
+  uint8_t memory[]={0xC9,0x55,0xF5,0x88,0x59,0x66,0x25,0x77,0x58,0x68};
+  char* show= "0xC9,0x55,0xF5,0x88,0x59,0x66,0x25,0x77,0x58,0x68";
   uint8_t *codePtr = memory;
-  //char* strBuffer = malloc(strlen(result) + 1);
-  //strcpy(strBuffer, result);
-  //TEST_ASSERT_EQUAL_STRING("addwf  0x59 WREG,BANKED",strBuffer);
-  //TEST_ASSERT_EQUAL(8, codePtr - memory);               //compare number of bytes
+  char* result = disassembleNBytes(&codePtr,4);          // the last value represent how many instruction we display
+  TEST_ASSERT_EQUAL(10, codePtr - memory);               //compare number of bytes which been successfully been disassemble
   //TEST_ASSERT_EQUAL(8, opcodeTable[upperByte].size);
-  //TEST_ASSERT_EQUAL(4,codePtr);
   OperatorToken token = {
    .type = TOKEN_OPERATOR_TYPE,
    .startColumn = 20,
@@ -39,6 +36,7 @@ void test_movff_expect_wrong(void)
    .originalStr = show,
    .str = "0xE9",
  };
+
   Try {
     throwException(ERR_INVALID_OPERAND, (void *)&token,                     \
                    "Invalid opecode, opcode of %s cannot be usee",      \
@@ -48,8 +46,8 @@ void test_movff_expect_wrong(void)
     dumpErrorMessage(ex, 1);
   }
   freeException(ex);
-  printf("OUTPUT:\n");
-  char* result = disassembleNBytes(&codePtr,3);
+  printf("OUTPUT:\n%s",result);
+  //char* result = disassembleNBytes(&codePtr,3);
   TEST_ASSERT_EQUAL_STRING("addwf  0x59 WREG,BANKED",result);
   free(result);
 }
