@@ -317,7 +317,10 @@ char* disassemble(uint8_t **codePtrPtr)
 
   if(opcodeTable[upperByte].execute == 0)                       // Once detect the wrong instruction, it will stop ...
   {
+    char* buffer = malloc(2048);
+    sprintf(buffer,"Error Opcode: 0x%2x",upperByte);
     throwException(upperByte, (void *)upperByte, "\n Program stopped.Invalid upperByte opcode detected : 0x%2x",upperByte);
+    return buffer;
   }
   else                                                         // If the instruction can be find, it will continue here ...
   {

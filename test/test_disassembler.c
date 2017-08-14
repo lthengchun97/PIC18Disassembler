@@ -70,27 +70,28 @@ void test_addwf_movlw_bra_movff_bsf_all_correct(void)
 void test_clrf_addlw_rcall_tblrt_lfsr_and_last_upperbyte_wrong(void)
 {
   CEXCEPTION_T ex;
+  //char* result;
   uint8_t memory[]={0x6B,0x70,0x0F,0x55,0xD8,0x66,0x00,0x09,0xEE,0x55,0xF0,0x15,0xE9,0x66};
   uint8_t *codePtr = memory;
-  uint8_t *codeMem = memory;
   printf("=============================================================================================");
   printf("\nTEST 3 :\n");
   printf("OUTPUT:\n");
   //char* result = disassembleNBytes(&codePtr,6);          // the last value represent how many instruction we display
   printf("\n");
-  //TEST_ASSERT_EQUAL(10, codePtr - memory);               //compare number of bytes which been successfully been disassembles
   Try {
-    char *result=disassembleNBytes(&codePtr,6);
-    printf("%s",result);
+    char* result=disassembleNBytes(&codePtr,6);
+    printf("%s",result );
+    //TEST_ASSERT_EQUAL(10, codePtr - memory);               //compare number of bytes which been successfully been disassembles
     //TEST_ASSERT_EQUAL_STRING("movff  0x955, 0x588subwfb  0x66 WREG,BANKEDsubwfb  0x77 WREG,BANKEDsubwfb  0x68 WREG,BANKED",result);
   } Catch(ex) {
-    //char *result=disassembleNBytes(&codeMem,6);
-    //printf("%s",result);
+    //TEST_ASSERT_EQUAL_STRING("movff  0x955, 0x588subwfb  0x66 WREG,BANKEDsubwfb  0x77 WREG,BANKEDsubwfb  0x68 WREG,BANKED",result);
+    TEST_ASSERT_EQUAL(12, codePtr - memory);
+    printf("%s",result);
     dumpException(ex);
-    //printf("Error instruction: 0x%2x",ex->errorCode);
+    printf("Error instruction: 0x%2x",ex->errorCode);
   }
 
-  freeException(ex);
+  //freeException(ex);
 }
 
 void test_sublw_iorlw_xorlw_xorlw_andlw_retlw_mullw_movlw_addlw_movlb_given_movlw_wrong(void)
