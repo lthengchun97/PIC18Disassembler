@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdarg.h>
+
 typedef struct Exception Exception;
 typedef Exception* ExceptionPtr;
 struct Exception {
@@ -12,7 +13,7 @@ struct Exception {
   int  errorCode;
   void *data;
 };
-
+void dumpErrorMessage(Exception *e, int lineNo);
 Exception *createException(char *msg, int errorCode);
 void freeException(Exception *e);
 void dumpException(Exception *e);

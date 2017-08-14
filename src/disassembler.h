@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include "token.h"
+#include "error.h"
 
 uint8_t next_8;
 uint8_t opcode;
@@ -80,6 +82,7 @@ char* call(uint8_t *code);
 char* goto1(uint8_t *code);
 char* lfsr(uint8_t *code);
 char* rcall(uint8_t *code);
+char* bra(uint8_t *code);
 char* movff(uint8_t *code);
 char* disassemble (uint8_t **codePtrPtr);
 char* disassembleNBytes(uint8_t **codePtrPtr, int nBytes);

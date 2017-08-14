@@ -7,6 +7,8 @@
 #include "Exception.h"
 #include <stdarg.h>
 #include "string.h"
+#include "token.h"
+#include "error.h"
 
 #define KB 1024
 
@@ -233,6 +235,14 @@ CheckIdentifier opcodeTable[256] = {
   [0xED]={call,4},
   [0xEF]={goto1,4},
   [0xEE]={lfsr,4},
+  [0xD0]={bra,2},
+  [0xD1]={bra,2},
+  [0xD2]={bra,2},
+  [0xD3]={bra,2},
+  [0xD4]={bra,2},
+  [0xD5]={bra,2},
+  [0xD6]={bra,2},
+  [0xD7]={bra,2},
   [0xD8]={rcall,2},
   [0xD9]={rcall,2},
   [0xDA]={rcall,2},
@@ -266,7 +276,7 @@ CheckIdentifier opcodeTable[256] = {
 
 char* disassembleNBytes(uint8_t **codePtrPtr, int nCodes)
 {
-  uint8_t startCodePtr = codePtr[0];
+  //uint8_t startCodePtr = codePtr[0];
 
   char* str;
   char* buff = malloc(1028);
@@ -275,14 +285,12 @@ char* disassembleNBytes(uint8_t **codePtrPtr, int nCodes)
    for( i = 0 ; i < nCodes ; i++)
    {
     str = disassemble(codePtrPtr);
+    strcat(str,"\n");
     if( i == 0)
       strcpy(buff,str);
     else
       strcat(buff,str);
-    //return buff;
    }
-   //str = codeAlign(str);
-
    return buff;
 }
 
@@ -307,31 +315,19 @@ char* disassemble(uint8_t **codePtrPtr)
     next_8 =codePtr[1];        // 2nd byte
   }
 
-  if(opcodeTable[upperByte].execute == 0)       // Once detect the wrong instruction, it will stop ...
+  if(opcodeTable[upperByte].execute == 0)                       // Once detect the wrong instruction, it will stop ...
+  {
+    throwException(upperByte, (void *)upperByte, "\n Program stopped.Invalid upperByte opcode detected : 0x%2x",upperByte);
+  }
+  else                                                         // If the instruction can be find, it will continue here ...
   {
     char* buffer = malloc(1028);
-    sprintf(buffer,"Invalid instruction. Cannot recognize upperByte of 0x%2x.",upperByte);
-    // Invalid instruction. Cannot recognize 'xxxxx'.
-    //printf("Invalid instruction.This opcode 0x%2x cannot be use\n",upperByte);
-    return buffer;
-  }
-  else
-  {
-    char* buffer = malloc(1028);
-    *codePtrPtr += opcodeTable[upperByte].size;
-    return opcodeTable[upperByte].execute(codePtr);
-  }
-}
+    *codePtrPtr += opcodeTable[upperByte].size;               // The reason to uses this add the size of the word instruction is because in PIC18,
+    return opcodeTable[upperByte].execute(codePtr);           // There are some opcode using 2 word instruction and 4 word instruction, so we need to
+  }                                                           // increment the size so that when in checking the memory in main_test, it will know how
+}                                                             // many of bytes it need to skip and do for the next word instruction.
 
-char* codeAlign(char* displayOut, ...)
-{
-  va_list args;
-  char* buffer = malloc(1024);
-  int length;
-  va_start(args,displayOut);
-  length=vsnprintf(buffer,1024,displayOut,args);
-  return buffer;
-}
+
 
 char *movff(uint8_t *code)
 {
@@ -342,12 +338,10 @@ char *movff(uint8_t *code)
   next_16 = next_16 & 0x0F;
   if(movff_test == 0xF)
   {
-    sprintf(buffer,"movff %#4x%2x,%#4x%2x",upperByte,next_8,next_16,next_32);
-    printf("%s\n",buffer);
+    sprintf(buffer,"movff 0x%x%2x,0x%x%2x",upperByte,next_8,next_16,next_32);
   }
   else
   {
-    printf("invalid\n");
     sprintf(buffer,"invalid");
   }
   return buffer;
@@ -358,11 +352,18 @@ char *rcall(uint8_t *code)
   char *buffer;
   buffer = malloc(1028);
   upperByte = upperByte &0x07;
-  sprintf(buffer,"rcall %#4x%2x",upperByte,next_8);
-  printf("%s \n",buffer);
+  sprintf(buffer,"rcall 0x%x%2x",upperByte,next_8);
   return buffer;
 }
 
+char *bra(uint8_t *code)
+{
+  char *buffer;
+  buffer = malloc(1028);
+  upperByte = upperByte &0x07;
+  sprintf(buffer,"bra 0x%x%2x",upperByte,next_8);
+  return buffer;
+}
 
 char* call(uint8_t *code)
 {
@@ -372,7 +373,6 @@ char* call(uint8_t *code)
   if(next_16 == 0xF0)
     {
       sprintf(buffer,"call 0x%2x\nnop 0x%2x",next_8,next_32 );
-      printf("%s\n",buffer);
     }
   else
   {
@@ -389,7 +389,6 @@ char* goto1(uint8_t *code)
   if(next_16 == 0xF0)
     {
       sprintf(buffer,"goto 0x%2x\nnop 0x%2x",next_8,next_32);
-      printf("%s\n",buffer);
     }
   else
   {
@@ -408,7 +407,6 @@ char* lfsr(uint8_t *code)
   if(next_16 == 0xF0)
     {
       sprintf(buffer,"lfsr 0x%2x, 0x%2x",next_8,next_32);
-      printf("%s\n",buffer);
     }
   else
   {
@@ -425,22 +423,18 @@ char* addwf (uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("addwf  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"addwf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("addwf  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"addwf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("addwf  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"addwf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("addwf  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"addwf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -453,22 +447,18 @@ char* addwfc(uint8_t *code){
 
   if(differentiate == 00)
   {
-    printf("addwfc  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"addwfc  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("addwfc  0x%2x WREG,BANEKD\n",next_8);
     sprintf(buffer,"addwfc  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("addwfc  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"addwfc  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("addwfc  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"addwfc  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -481,22 +471,18 @@ char* andwf(uint8_t *code){
 
   if(differentiate == 00)
   {
-    printf("andwf  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"andwf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("andwf  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"andwf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("andwf  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"andwf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("andwf  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"andwf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -509,12 +495,10 @@ char* clrf(uint8_t *code){
 
   if(differentiate == 10)
   {
-    printf("clrf  0x%2x ACCESS\n",next_8);
     sprintf(buffer,"clrf  0x%2x ACCESS",next_8);
   }
   else if (differentiate == 11)
   {
-    printf("clrf  0x%2x BANKED\n",next_8);
     sprintf(buffer,"clrf  0x%2x BANKED",next_8);
   }
 
@@ -529,22 +513,18 @@ char* comf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("comf  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"comf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("comf  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"comf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("comf  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"comf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("comf  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"comf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -558,12 +538,10 @@ char* cpfseq(uint8_t *code)
 
   if(differentiate == 10)
   {
-    printf("cpfseq  0x%2x ACCESS\n",next_8);
     sprintf(buffer,"cpfseq  0x%2x ACCESS",next_8);
   }
   else if (differentiate == 11)
   {
-    printf("cpfseq  0x%2x BANKED\n",next_8);
     sprintf(buffer,"cpfseq  0x%2x BANKED",next_8);
   }
 
@@ -578,12 +556,10 @@ char* cpfsgt(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("cpfsgt  0x%2x ACCESS\n",next_8);
     sprintf(buffer,"cpfsgt  0x%2x ACCESS",next_8);
   }
   else if (differentiate == 01)
   {
-    printf("cpfsgt  0x%2x BANKED\n",next_8);
     sprintf(buffer,"cpfsgt  0x%2x BANKED",next_8);
   }
   return buffer;
@@ -597,12 +573,10 @@ char* cpfslt(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("cpfslt  0x%2x ACCESS\n",next_8);
     sprintf(buffer,"cpfslt  0x%2x ACCESS",next_8);
   }
   else if (differentiate == 01)
   {
-    printf("cpfslt  0x%2x BANKED\n",next_8);
     sprintf(buffer,"cpfslt  0x%2x BANKED",next_8);
   }
   return buffer;
@@ -616,22 +590,18 @@ char* decf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("decf  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"decf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("decf  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"decf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("decf  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"decf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("decf  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"decf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -645,22 +615,18 @@ char* decfsz(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("decfsz  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"decfsz  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("decfsz  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"decfsz  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("decfsz  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"decfsz  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("decfsz  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"decfsz  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -674,22 +640,18 @@ char* dcfsnz(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("dcfsnz  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"dcfsnz  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("dcfsnz  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"dcfsnz  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("dcfsnz  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"dcfsnz  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("dcfsnz  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"dcfsnz  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -703,22 +665,18 @@ char* incf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("incf  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"incf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("incf  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"incf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("incf  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"incf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("incf  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"incf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -732,22 +690,18 @@ char* incfsz(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("incfsz  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"incfsz  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("incfsz  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"incfsz  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("incfsz  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"incfsz  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("incfsz  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"incfsz  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -761,22 +715,18 @@ char* infsnz(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("infsnz  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"infsnz  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("infsnz  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"infsnz  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("infsnz  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"infsnz  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("infsnz  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"infsnz  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -790,22 +740,18 @@ char* iorwf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("iorfwf  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"iorwf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("iorwf  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"iorwf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("iorwf  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"iorwf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("iorwf  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"iorwf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -819,22 +765,18 @@ char* movf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("movf  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"movf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("movf  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"movf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("movf  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"movf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("movf  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"movf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -848,12 +790,10 @@ char* movwf(uint8_t *code)
 
   if(differentiate == 10)
   {
-    printf("movwf  0x%2x ACCESS\n",next_8);
     sprintf(buffer,"movwf  0x%2x ACCESS",next_8);
   }
   else if (differentiate == 11)
   {
-    printf("movwf  0x%2x BANKED\n",next_8);
     sprintf(buffer,"movwf  0x%2x BANKED",next_8);
   }
 
@@ -868,12 +808,10 @@ char* mulwf(uint8_t *code)
 
   if(differentiate == 10)
   {
-    printf("mulwf  0x%2x ACCESS\n",next_8);
     sprintf(buffer,"mulwf  0x%2x ACCESS",next_8);
   }
   else if (differentiate == 11)
   {
-    printf("mulwf  0x%2x BANKED\n",next_8);
     sprintf(buffer,"mulwf  0x%2x BANKED",next_8);
   }
 
@@ -888,12 +826,10 @@ char* negf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("negf  0x%2x ACCESS\n",next_8);
     sprintf(buffer,"negf  0x%2x ACCESS",next_8);
   }
   else if (differentiate == 01)
   {
-    printf("negf  0x%2x BANKED\n",next_8);
     sprintf(buffer,"negf  0x%2x BANKED",next_8);
   }
   return buffer;
@@ -907,22 +843,18 @@ char* rlcf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("rlcf  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"rlcf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("rlcf  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"rlcf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("rlcf  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"rlcf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("rlcf  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"rlcf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -936,22 +868,18 @@ char* rlncf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("rlncf  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"rlncf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("rlncf  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"rlncf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("rlncf  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"rlncf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("rlncf  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"rlncf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -965,22 +893,18 @@ char* rrcf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("rrcf  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"rrcf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("rrcf  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"rrcf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("rrcf  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"rrcf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("rrcf  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"rrcf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -994,22 +918,18 @@ char* rrncf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("rrncf  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"rrncf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("rrncf  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"rrncf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("rrncf  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"rrncf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("rrncf  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"rrncf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -1023,12 +943,10 @@ char* setf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("setf  0x%2x ACCESS\n",next_8);
     sprintf(buffer,"setf  0x%2x ACCESS",next_8);
   }
   else if (differentiate == 01)
   {
-    printf("setf  0x%2x BANKED",next_8);
     sprintf(buffer,"setf  0x%2x BANKED",next_8);
   }
   return buffer;
@@ -1042,22 +960,18 @@ char* subfwb(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("subfwb  0x%2x WREG,ACCESS",next_8);
     sprintf(buffer,"subfwb  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("subfwb  0x%2x WREG,BANKED",next_8);
     sprintf(buffer,"subfwb  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("subfwb  0x%2x f,ACCESS",next_8);
     sprintf(buffer,"subfwb  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("subfwb  0x%2x f,BANKED",next_8);
     sprintf(buffer,"subfwb  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -1071,22 +985,18 @@ char* subwf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("subwf  0x%2x WREG,ACCESS",next_8);
     sprintf(buffer,"subwf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("subwf  0x%2x WREG,BANKED",next_8);
     sprintf(buffer,"subwf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("subwf  0x%2x f,ACCESS",next_8);
     sprintf(buffer,"subwf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("subwf  0x%2x f,BANKED",next_8);
     sprintf(buffer,"subwf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -1100,22 +1010,18 @@ char* subwfb(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("subwfb  0x%2x WREG,ACCESS\n",next_8);
     sprintf(buffer,"subwfb  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("subwfb  0x%2x WREG,BANKED\n",next_8);
     sprintf(buffer,"subwfb  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("subwfb  0x%2x f,ACCESS\n",next_8);
     sprintf(buffer,"subwfb  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("subwfb  0x%2x f,BANKED\n",next_8);
     sprintf(buffer,"subwfb  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -1129,22 +1035,18 @@ char* swapf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("swapf  0x%2x WREG,ACCESS",next_8);
     sprintf(buffer,"swapf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("swapf  0x%2x WREG,BANKED",next_8);
     sprintf(buffer,"swapf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("swapf  0x%2x f,ACCESS",next_8);
     sprintf(buffer,"swapf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("swapf  0x%2x f,BANKED",next_8);
     sprintf(buffer,"swapf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -1158,12 +1060,10 @@ char* tstfsz(uint8_t *code)
 
   if(differentiate == 10)
   {
-    printf("tstfsz  0x%2x ACCESS",next_8);
     sprintf(buffer,"tstfsz  0x%2x ACCESS",next_8);
   }
   else if (differentiate == 11)
   {
-    printf("tstfsz  0x%2x BANKED",next_8);
     sprintf(buffer,"tstfsz  0x%2x BANKED",next_8);
   }
 
@@ -1178,22 +1078,18 @@ char* xorwf(uint8_t *code)
 
   if(differentiate == 00)
   {
-    printf("xorwf  0x%2x WREG,ACCESS",next_8);
     sprintf(buffer,"xorwf  0x%2x WREG,ACCESS",next_8);
   }
   else if(differentiate == 01)
   {
-    printf("xorwf  0x%2x WREG,BANKED",next_8);
     sprintf(buffer,"xorwf  0x%2x WREG,BANKED",next_8);
   }
   else if(differentiate == 10)
   {
-    printf("xorwf  0x%2x f,ACCESS",next_8);
     sprintf(buffer,"xorwf  0x%2x f,ACCESS",next_8);
   }
   else
   {
-    printf("xorwf  0x%2x f,BANKED",next_8);
     sprintf(buffer,"xorwf  0x%2x f,BANKED",next_8);
   }
   return buffer;
@@ -1208,12 +1104,10 @@ char* bcf(uint8_t *code)
 
   if(differentiate == 0)
   {
-    printf("bcf  %#4x %d,ACCESS\n",next_8,getB);
     sprintf(buffer,"bcf  %#4x %d,ACCESS",next_8,getB);
   }
   else
   {
-    printf("bcf  %#4x %d,BANKED\n",next_8,getB);
     sprintf(buffer,"bcf  %#4x %d,BANKED",next_8,getB);
   }
   return buffer;
@@ -1228,12 +1122,10 @@ char* bsf(uint8_t *code)
 
   if(differentiate == 0)
   {
-    printf("bsf  %#4x %d,ACCESS",next_8,getB);
     sprintf(buffer,"bsf  %#4x %d,ACCESS",next_8,getB);
   }
   else
   {
-    printf("bsf  %#4x %d,BANKED",next_8,getB);
     sprintf(buffer,"bsf  %#4x %d,BANKED",next_8,getB);
   }
   return buffer;
@@ -1248,12 +1140,10 @@ char* btfsc(uint8_t *code)
 
   if(differentiate == 0)
   {
-    printf("btfsc  %#4x %d,ACCESS",next_8,getB);
     sprintf(buffer,"bstfsc  %#4x %d,ACCESS",next_8,getB);
   }
   else
   {
-    printf("btfsc  %#4x %d,BANKED",next_8,getB);
     sprintf(buffer,"btfsc  %#4x %d,BANKED",next_8,getB);
   }
   return buffer;
@@ -1269,12 +1159,10 @@ char* btfss(uint8_t *code)
 
   if(differentiate == 0)
   {
-    printf("btfss  %#4x %d,ACCESS",next_8,getB);
     sprintf(buffer,"btfss  %#4x %d,ACCESS",next_8,getB);
   }
   else
   {
-    printf("btfss  %#4x %d,BANKED",next_8,getB);
     sprintf(buffer,"btfss  %#4x %d,BANKED",next_8,getB);
   }
   return buffer;
@@ -1289,12 +1177,10 @@ char* btg(uint8_t *code)
 
   if(differentiate == 0)
   {
-    printf("btg  %#4x %d,ACCESS",next_8,getB);
     sprintf(buffer,"btg  %#4x %d,ACCESS",next_8,getB);
   }
   else
   {
-    printf("btg  %#4x %d,BANKED",next_8,getB);
     sprintf(buffer,"btg  %#4x %d,BANKED",next_8,getB);
   }
   return buffer;
@@ -1304,7 +1190,6 @@ char* bc(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("bc %#4x",next_8);
   sprintf(buffer,"bc %#4x",next_8);
   return buffer;
 }
@@ -1313,7 +1198,6 @@ char* bn(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("bn %#4x",next_8);
   sprintf(buffer,"bn %#4x",next_8);
   return buffer;
 }
@@ -1322,7 +1206,6 @@ char* bnc(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("bnc %#4x",next_8);
   sprintf(buffer,"bnc %#4x",next_8);
   return buffer;
 }
@@ -1331,7 +1214,6 @@ char* bnn(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("bnn %#4x",next_8);
   sprintf(buffer,"bnn %#4x",next_8);
   return buffer;
 }
@@ -1340,7 +1222,6 @@ char* bnov(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("bnov %#4x",next_8);
   sprintf(buffer,"bnov %#4x",next_8);
   return buffer;
 }
@@ -1349,7 +1230,6 @@ char* bnz(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("bnov %#4x",next_8);
   sprintf(buffer,"bnov %#4x",next_8);
   return buffer;
 }
@@ -1358,7 +1238,6 @@ char* bov(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("bov %#4x",next_8);
   sprintf(buffer,"bov %#4x",next_8);
   return buffer;
 }
@@ -1369,93 +1248,77 @@ char* zero(uint8_t *code)
   buffer = malloc(1028);
   if(next_8 == 0x08)
   {
-    printf("TBLRD*");
     sprintf(buffer,"TBLRD*");
   }
   else if(next_8 == 0x09)
   {
-    printf("TBLRD*+");
     sprintf(buffer,"TBLRD*+");
   }
   else if(next_8 == 0x0A)
   {
-    printf("TBLRD*-");
     sprintf(buffer,"TBLRD*-");
   }
   else if(next_8 == 0x0B)
   {
-    printf("TBLRD+*");
     sprintf(buffer,"TBLRD+*");
   }
   else if(next_8 == 0x0C)
   {
-    printf("TBLWT*");
     sprintf(buffer,"TBLWT*");
   }
   else if(next_8 == 0x0D)
   {
-    printf("TBLWT*+");
     sprintf(buffer,"TBLWT*+");
   }
   else if(next_8 == 0x0E)
   {
-    printf("TBLWT*-");
     sprintf(buffer,"TBLWT*-");
   }
   else if(next_8 == 0x0F)
   {
-    printf("TBLWT+*");
     sprintf(buffer,"TBLWT+*");
   }
   else if(next_8 == 0x04)
   {
-    printf("clrwdt");
-    sprintf(buffer,"clrwdt");
+    sprintf(buffer,"clrwdt ");
   }
   else if(next_8 == 0x07)
   {
-    printf("daw");
-    sprintf(buffer,"daw");
+    sprintf(buffer,"daw ");
   }
   else if(next_8 == 0x00)
   {
-    printf("nop");
-    sprintf(buffer,"nop");
+    sprintf(buffer,"nop ");
   }
   else if(next_8 == 0x06)
   {
-    printf("pop");
-    sprintf(buffer,"pop");
+    sprintf(buffer,"pop ");
   }
   else if(next_8 == 0x05)
   {
-    printf("push");
-    sprintf(buffer,"push");
+    sprintf(buffer,"push ");
   }
   else if(next_8 == 0xFF)
   {
-    printf("reset");
-    sprintf(buffer,"reset");
+    sprintf(buffer,"reset ");
   }
   else if(next_8 == 0x11 || next_8 == 0x10)
   {
-    printf("retfie");
-    sprintf(buffer,"retfie");
+    sprintf(buffer,"retfie ");
   }
   else if(next_8 == 0x12 || next_8 == 0x13)
   {
-    printf("return");
-    sprintf(buffer,"return");
+    sprintf(buffer,"return ");
   }
   else if(next_8 == 0x03)
   {
-    printf("sleep");
-    sprintf(buffer,"sleep");
+    sprintf(buffer,"sleep ");
   }
   else
   {
-    //printf("error , no such opcode to display");
-    sprintf(buffer,"error , no such opcode to display");
+    throwException(ERR_INVALID_INSTRUCTION, (void *)next_8, "\n Program stopped.Invalid lowerByte opcode for special upperByte 0x00 detected : 0x%2x",next_8);
+    //printf("error , no such opcode to display");0
+    //sprintf(buffer,"error , no such opcode to display");
   }
   return buffer;
 }
@@ -1464,7 +1327,6 @@ char* addlw(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("addlw %#4x",next_8);
   sprintf(buffer,"addlw %#4x",next_8);
   return buffer;
 }
@@ -1473,7 +1335,6 @@ char* andlw(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("andlw %#4x",next_8);
   sprintf(buffer,"andlw %#4x",next_8);
   return buffer;
 }
@@ -1482,7 +1343,6 @@ char* iorlw(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("iorlw %#4x",next_8);
   sprintf(buffer,"iorlw %#4x",next_8);
   return buffer;
 }
@@ -1491,7 +1351,6 @@ char* movlw(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("movlw %#4x",next_8);
   sprintf(buffer,"movlw %#4x",next_8);
   return buffer;
 }
@@ -1500,7 +1359,6 @@ char* mullw(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("mullw %#4x",next_8);
   sprintf(buffer,"mullw %#4x",next_8);
   return buffer;
 }
@@ -1509,7 +1367,6 @@ char* retlw(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("retlw %#4x",next_8);
   sprintf(buffer,"retlw %#4x",next_8);
   return buffer;
 }
@@ -1518,7 +1375,6 @@ char* sublw(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("sublw %#4x",next_8);
   sprintf(buffer,"sublw %#4x",next_8);
   return buffer;
 }
@@ -1527,7 +1383,6 @@ char* xorlw(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  printf("xorlw %#4x",next_8);
   sprintf(buffer,"xorlw %#4x",next_8);
   return buffer;
 }
@@ -1540,13 +1395,13 @@ char* movlb(uint8_t *code)
   forthcode = next_8 & 0x0F;
   if(thirdcode == 0x0)
   {
-    printf("movlb%#4x",forthcode);
     sprintf(buffer,"movlb%#4x",forthcode);
   }
   else
   {
-    printf("error, no such opcode");
-    sprintf(buffer,"error, no such opcode");
+    throwException(ERR_INVALID_INSTRUCTION, (void *)next_8, "\n Program stopped.Invalid lowerByte opcode for special upperByte %#04x (movlb) detected : 0x%2x",upperByte,next_8);
+    //printf("error, no such opcode");
+    //sprintf(buffer,"error, no such opcode");
   }
   return buffer;
 }
@@ -1555,11 +1410,28 @@ char* nop1(uint8_t *code)
 {
   char *buffer;
   buffer = malloc(1028);
-  printf("nop");
   sprintf(buffer,"nop");
   return buffer;
 }
+/**
+  This function is to check the status of the RAM and DESTINATION
+  For RAM:
+          a=0 :RAM location in Access RAM (BSR register is ignored)
+          a=1 :RAM bank is specified by BSR register
+  For DESTINATION:
+          d=0 :store result in WREG
+          d=1 :store result in file register f
 
+  In most of the function, we knew that the arrange of RAM and DESTINATION
+  status is , for example like :
+                  movlw xxx d,a
+
+  Thus, in this function , i made it for a = MSB and d = LSB and listed out
+  all the possibility for the a and d.
+
+  And this function can be called by the opcodeTable function to detect what
+  it should be wrote in.
+**/
 int ad(uint8_t code)
 {
   uint8_t adcode = upperByte & 0x03;
@@ -1581,6 +1453,10 @@ int ad(uint8_t code)
   }
 }
 
+/**
+  In this function, we only find the a value for the opcode function,
+  because it doesnt have the d value to do,whereas we can just ignore it.
+**/
 int a(uint8_t code)
 {
   uint8_t adcode = upperByte & 0x01;
@@ -1593,7 +1469,11 @@ int a(uint8_t code)
     return 1;
   }
 }
-
+/**
+  This function is to find the bit address within an 8-bit file register
+  for some certain opcode.
+  It is from 0x00 to 0x0F.
+**/
 int bbb(uint8_t code)
 {
   uint8_t adcode = upperByte & 0x0E;

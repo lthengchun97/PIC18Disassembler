@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "error.h"
+#include "token.h"
 
 
 void throwException(int errorCode, void *data, char *message, ...) {
@@ -18,14 +20,14 @@ void throwException(int errorCode, void *data, char *message, ...) {
 
   length = vsnprintf(buffer, 0, message, args);
   buffer = malloc(length + 1);
-  vsnprintf(buffer, length, message, args);
+  vsnprintf(buffer, length + 1, message, args);
 
   e->msg = buffer;
   e->errorCode = errorCode;
   e->data = data;
 
   Throw(e);
-} 
+}
 
 void freeException(Exception *e) {
   if(e) {
@@ -36,5 +38,5 @@ void freeException(Exception *e) {
 }
 
 void dumpException(Exception *e) {
-  printf("%s (err=%d)\n", e->msg, e->errorCode);
+  printf("%s \n", e->msg);
 }
