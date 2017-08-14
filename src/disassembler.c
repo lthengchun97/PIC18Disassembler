@@ -6,6 +6,7 @@
 #include "CException.h"
 #include "Exception.h"
 #include <stdarg.h>
+#include "string.h"
 
 #define KB 1024
 
@@ -274,11 +275,15 @@ char* disassembleNBytes(uint8_t **codePtrPtr, int nCodes)
    for( i = 0 ; i < nCodes ; i++)
    {
     str = disassemble(codePtrPtr);
-    strcpy(buff,str);
+    if( i == 0)
+      strcpy(buff,str);
+    else
+      strcat(buff,str);
+    //return buff;
    }
    //str = codeAlign(str);
 
-   return str;
+   return buff;
 }
 
 /**
@@ -366,7 +371,7 @@ char* call(uint8_t *code)
   next_16 = next_16 & 0xF0;
   if(next_16 == 0xF0)
     {
-      sprintf(buffer,"call 0x%2x\nnop 0x%2x",next_8,next_32);
+      sprintf(buffer,"call 0x%2x\nnop 0x%2x",next_8,next_32 );
       printf("%s\n",buffer);
     }
   else
