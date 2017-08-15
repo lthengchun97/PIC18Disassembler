@@ -279,13 +279,14 @@ char* disassembleNBytes(uint8_t **codePtrPtr, int nCodes)
   //uint8_t startCodePtr = codePtr[0];
 
   char* str;
-  char* buff = malloc(1028);
-  str=malloc(1028);
+  char* buff = malloc(30*nCodes);
+  str=malloc(30*nCodes);
   int i;
    for( i = 0 ; i < nCodes ; i++)
    {
     str = disassemble(codePtrPtr);
     strcat(str,"\n");
+    printf("%s",str);
     if( i == 0)
       strcpy(buff,str);
     else
@@ -300,7 +301,6 @@ char* disassembleNBytes(uint8_t **codePtrPtr, int nCodes)
 char* disassemble(uint8_t **codePtrPtr)
 {
   uint8_t *codePtr = *codePtrPtr;
-
   // codePtr use for checking the bytes
   if(opcodeTable[codePtr[0]].size==4)
   {
@@ -317,10 +317,10 @@ char* disassemble(uint8_t **codePtrPtr)
 
   if(opcodeTable[upperByte].execute == 0)                       // Once detect the wrong instruction, it will stop ...
   {
-    char* buffer = malloc(2048);
-    sprintf(buffer,"Error Opcode: 0x%2x",upperByte);
+    //char* buffer = malloc(2048);
+    //sprintf(buffer,"Error Opcode: 0x%2x",upperByte);
     throwException(upperByte, (void *)upperByte, "\n Program stopped.Invalid upperByte opcode detected : 0x%2x",upperByte);
-    return buffer;
+    //return buffer;
   }
   else                                                         // If the instruction can be find, it will continue here ...
   {
@@ -330,22 +330,54 @@ char* disassemble(uint8_t **codePtrPtr)
   }                                                           // increment the size so that when in checking the memory in main_test, it will know how
 }                                                             // many of bytes it need to skip and do for the next word instruction.
 
+char* composeFda(char* opcodeName, uint8_t fileReg,int dirAccessFlags)
+{
+  char* buffer = malloc(50);
+  switch(dirAccessFlags){
+    case 1:sprintf(buffer,"%s 0x%2x WREG,ACCESS",opcodeName,fileReg);
+            break;
+    case 2:sprintf(buffer,"%s 0x%2x WREG,BANKED",opcodeName,fileReg);
+            break;
+    case 3:sprintf(buffer,"%s 0x%2x f,ACCESS",opcodeName,fileReg);
+            break;
+    case 4:sprintf(buffer,"%s 0x%2x f,BANKED",opcodeName,fileReg);
+            break;
+  }
+  return buffer;
+}
 
+char* composeFa(char* opcodeName, uint8_t fileReg,int dirAccessFlags)
+{
+  char* buffer = malloc(50);
+  switch(dirAccessFlags){
+    case 1:sprintf(buffer,"%s 0x%2x ACCESS",opcodeName,fileReg);
+            break;
+    case 2:sprintf(buffer,"%s 0x%2x BANKED",opcodeName,fileReg);
+            break;
+  }
+  return buffer;
+}
 
+char* composeF(char* opcodeName, uint8_t fileReg)
+{
+  char* buffer = malloc(50);
+  sprintf(buffer,"%s 0x%2x",opcodeName,fileReg);
+  return buffer;
+}
 char *movff(uint8_t *code)
 {
   char *buffer;
   buffer = malloc(1028);
   upperByte = upperByte & 0x0F;
   uint8_t movff_test = (next_16 >> 4) & 0x0F;
-  next_16 = next_16 & 0x0F;
+  thirdcode = next_16 & 0x0F;
   if(movff_test == 0xF)
   {
-    sprintf(buffer,"movff 0x%x%2x,0x%x%2x",upperByte,next_8,next_16,next_32);
+    sprintf(buffer,"movff 0x%x%2x,0x%x%2x",upperByte,next_8,thirdcode,next_32);
   }
   else
   {
-    sprintf(buffer,"invalid");
+    throwException(next_16, (void *)next_16, "\n Program stopped.Invalid thirdByte opcode for special opcode movff (0x%2x)detected : 0x%2x",upperByte,next_16);
   }
   return buffer;
 }
@@ -372,14 +404,14 @@ char* call(uint8_t *code)
 {
   char* buffer;
   buffer = malloc(1028);
-  next_16 = next_16 & 0xF0;
-  if(next_16 == 0xF0)
+  thirdcode = next_16 & 0xF0;
+  if(thirdcode == 0xF0)
     {
       sprintf(buffer,"call 0x%2x\nnop 0x%2x",next_8,next_32 );
     }
   else
   {
-    sprintf(buffer,"invalid");
+    throwException(next_16, (void *)next_16, "\n Program stopped.Invalid thirdByte opcode for special opcode call (0x%2x) detected : 0x%2x",upperByte,next_16);
   }
   return buffer;
 }
@@ -420,682 +452,149 @@ char* lfsr(uint8_t *code)
 
 char* addwf (uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"addwf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"addwf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"addwf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"addwf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("addwf",next_8,ad(code));
 }
 
 char* addwfc(uint8_t *code){
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"addwfc  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"addwfc  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"addwfc  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"addwfc  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("addwfc",next_8,ad(code));
 }
 
 char* andwf(uint8_t *code){
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"andwf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"andwf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"andwf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"andwf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("andwf",next_8,ad(code));
 }
 
 char* clrf(uint8_t *code){
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 10)
-  {
-    sprintf(buffer,"clrf  0x%2x ACCESS",next_8);
-  }
-  else if (differentiate == 11)
-  {
-    sprintf(buffer,"clrf  0x%2x BANKED",next_8);
-  }
-
-  return buffer;
+  return composeFa("clrf",next_8,a(code));
 }
 
 char* comf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"comf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"comf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"comf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"comf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("comf",next_8,ad(code));
 }
 
 char* cpfseq(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 10)
-  {
-    sprintf(buffer,"cpfseq  0x%2x ACCESS",next_8);
-  }
-  else if (differentiate == 11)
-  {
-    sprintf(buffer,"cpfseq  0x%2x BANKED",next_8);
-  }
-
-  return buffer;
+  return composeFa("cpfseq",next_8,a(code));
 }
 
 char* cpfsgt(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"cpfsgt  0x%2x ACCESS",next_8);
-  }
-  else if (differentiate == 01)
-  {
-    sprintf(buffer,"cpfsgt  0x%2x BANKED",next_8);
-  }
-  return buffer;
+  return composeFa("cpfsgt",next_8,a(code));
 }
 
 char* cpfslt(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"cpfslt  0x%2x ACCESS",next_8);
-  }
-  else if (differentiate == 01)
-  {
-    sprintf(buffer,"cpfslt  0x%2x BANKED",next_8);
-  }
-  return buffer;
+  return composeFa("cpfslt",next_8,a(code));
 }
 
 char* decf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"decf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"decf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"decf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"decf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("decf",next_8,ad(code));
 }
 
 char* decfsz(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"decfsz  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"decfsz  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"decfsz  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"decfsz  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("decfsz",next_8,ad(code));
 }
 
 char* dcfsnz(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"dcfsnz  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"dcfsnz  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"dcfsnz  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"dcfsnz  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("dcfsnz",next_8,ad(code));
 }
 
 char* incf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"incf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"incf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"incf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"incf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("incf",next_8,ad(code));
 }
 
 char* incfsz(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"incfsz  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"incfsz  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"incfsz  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"incfsz  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("incfsz",next_8,ad(code));
 }
 
 char* infsnz(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"infsnz  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"infsnz  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"infsnz  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"infsnz  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("infsnz",next_8,ad(code));
 }
 
 char* iorwf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"iorwf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"iorwf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"iorwf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"iorwf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("iorwf",next_8,ad(code));
 }
 
 char* movf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"movf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"movf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"movf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"movf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("movf",next_8,ad(code));
 }
 
 char* movwf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 10)
-  {
-    sprintf(buffer,"movwf  0x%2x ACCESS",next_8);
-  }
-  else if (differentiate == 11)
-  {
-    sprintf(buffer,"movwf  0x%2x BANKED",next_8);
-  }
-
-  return buffer;
+  return composeFa("movwf",next_8,a(code));
 }
 
 char* mulwf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 10)
-  {
-    sprintf(buffer,"mulwf  0x%2x ACCESS",next_8);
-  }
-  else if (differentiate == 11)
-  {
-    sprintf(buffer,"mulwf  0x%2x BANKED",next_8);
-  }
-
-  return buffer;
+  return composeFa("mulwf",next_8,a(code));
 }
 
 char* negf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"negf  0x%2x ACCESS",next_8);
-  }
-  else if (differentiate == 01)
-  {
-    sprintf(buffer,"negf  0x%2x BANKED",next_8);
-  }
-  return buffer;
+  return composeFa("negf",next_8,a(code));
 }
 
 char* rlcf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"rlcf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"rlcf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"rlcf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"rlcf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("rlcf",next_8,ad(code));
 }
 
 char* rlncf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"rlncf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"rlncf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"rlncf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"rlncf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("rlncf",next_8,ad(code));
 }
 
 char* rrcf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"rrcf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"rrcf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"rrcf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"rrcf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("rrcf",next_8,ad(code));
 }
 
 char* rrncf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"rrncf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"rrncf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"rrncf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"rrncf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("rrncf",next_8,ad(code));
 }
 
 char* setf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"setf  0x%2x ACCESS",next_8);
-  }
-  else if (differentiate == 01)
-  {
-    sprintf(buffer,"setf  0x%2x BANKED",next_8);
-  }
-  return buffer;
+  return composeFa("setf",next_8,a(code));
 }
 
 char* subfwb(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"subfwb  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"subfwb  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"subfwb  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"subfwb  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("subfwb",next_8,ad(code));
 }
 
 char* subwf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"subwf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"subwf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"subwf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"subwf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("subwf",next_8,ad(code));
 }
 
 char* subwfb(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"subwfb  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"subwfb  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"subwfb  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"subwfb  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("subwfb",next_8,ad(code));
 }
 
 char* swapf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"swapf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"swapf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"swapf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"swapf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("swapf",next_8,ad(code));
 }
 
 char* tstfsz(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 10)
-  {
-    sprintf(buffer,"tstfsz  0x%2x ACCESS",next_8);
-  }
-  else if (differentiate == 11)
-  {
-    sprintf(buffer,"tstfsz  0x%2x BANKED",next_8);
-  }
-
-  return buffer;
+  return composeFa("tstfsz",next_8,a(code));
 }
 
 char* xorwf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = ad(opcode);
-
-  if(differentiate == 00)
-  {
-    sprintf(buffer,"xorwf  0x%2x WREG,ACCESS",next_8);
-  }
-  else if(differentiate == 01)
-  {
-    sprintf(buffer,"xorwf  0x%2x WREG,BANKED",next_8);
-  }
-  else if(differentiate == 10)
-  {
-    sprintf(buffer,"xorwf  0x%2x f,ACCESS",next_8);
-  }
-  else
-  {
-    sprintf(buffer,"xorwf  0x%2x f,BANKED",next_8);
-  }
-  return buffer;
+  return composeFda("xorwf",next_8,ad(code));
 }
 
 char* bcf(uint8_t *code)
@@ -1105,7 +604,7 @@ char* bcf(uint8_t *code)
   int differentiate = a(opcode);
   int getB = bbb(opcode);
 
-  if(differentiate == 0)
+  if(differentiate == 1)
   {
     sprintf(buffer,"bcf  %#4x %d,ACCESS",next_8,getB);
   }
@@ -1123,7 +622,7 @@ char* bsf(uint8_t *code)
   int differentiate = a(opcode);
   int getB = bbb(opcode);
 
-  if(differentiate == 0)
+  if(differentiate == 1)
   {
     sprintf(buffer,"bsf  %#4x %d,ACCESS",next_8,getB);
   }
@@ -1141,7 +640,7 @@ char* btfsc(uint8_t *code)
   int differentiate = a(opcode);
   int getB = bbb(opcode);
 
-  if(differentiate == 0)
+  if(differentiate == 1)
   {
     sprintf(buffer,"bstfsc  %#4x %d,ACCESS",next_8,getB);
   }
@@ -1160,7 +659,7 @@ char* btfss(uint8_t *code)
   int differentiate = a(opcode);
   int getB = bbb(opcode);
 
-  if(differentiate == 0)
+  if(differentiate == 1)
   {
     sprintf(buffer,"btfss  %#4x %d,ACCESS",next_8,getB);
   }
@@ -1178,7 +677,7 @@ char* btg(uint8_t *code)
   int differentiate = a(opcode);
   int getB = bbb(opcode);
 
-  if(differentiate == 0)
+  if(differentiate == 1)
   {
     sprintf(buffer,"btg  %#4x %d,ACCESS",next_8,getB);
   }
@@ -1191,58 +690,37 @@ char* btg(uint8_t *code)
 
 char* bc(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"bc %#4x",next_8);
-  return buffer;
+  return composeF("bc",next_8);
 }
 
 char* bn(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"bn %#4x",next_8);
-  return buffer;
+  return composeF("bn",next_8);
 }
 
 char* bnc(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"bnc %#4x",next_8);
-  return buffer;
+  return composeF("bnc",next_8);
 }
 
 char* bnn(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"bnn %#4x",next_8);
-  return buffer;
+  return composeF("bnn",next_8);
 }
 
 char* bnov(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"bnov %#4x",next_8);
-  return buffer;
+  return composeF("bnov",next_8);
 }
 
 char* bnz(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"bnov %#4x",next_8);
-  return buffer;
+  return composeF("bnov",next_8);
 }
 
 char* bov(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"bov %#4x",next_8);
-  return buffer;
+  return composeF("bov",next_8);
 }
 
 char* zero(uint8_t *code)
@@ -1319,75 +797,49 @@ char* zero(uint8_t *code)
   }
   else
   {
-    throwException(ERR_INVALID_INSTRUCTION, (void *)next_8, "\n Program stopped.Invalid lowerByte opcode for special upperByte 0x00 detected : 0x%2x",next_8);
-    //printf("error , no such opcode to display");0
-    //sprintf(buffer,"error , no such opcode to display");
+    throwException(next_8, (void *)next_8, "\n Program stopped.Invalid lowerByte opcode for special upperByte 0x00 detected : 0x%2x",next_8);
   }
   return buffer;
 }
 
 char* addlw(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"addlw %#4x",next_8);
-  return buffer;
+  return composeF("addlw",next_8);
 }
 
 char* andlw(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"andlw %#4x",next_8);
-  return buffer;
+  return composeF("andlw",next_8);
 }
 
 char* iorlw(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"iorlw %#4x",next_8);
-  return buffer;
+  return composeF("iorlw",next_8);
 }
 
 char* movlw(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"movlw %#4x",next_8);
-  return buffer;
+  return composeF("movlw",next_8);
 }
 
 char* mullw(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"mullw %#4x",next_8);
-  return buffer;
+  return composeF("mullw",next_8);
 }
 
 char* retlw(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"retlw %#4x",next_8);
-  return buffer;
+  return composeF("retlw",next_8);
 }
 
 char* sublw(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"sublw %#4x",next_8);
-  return buffer;
+  return composeF("sublw",next_8);
 }
 
 char* xorlw(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  sprintf(buffer,"xorlw %#4x",next_8);
-  return buffer;
+  return composeF("xorlw",next_8);
 }
 
 char* movlb(uint8_t *code)
@@ -1402,9 +854,7 @@ char* movlb(uint8_t *code)
   }
   else
   {
-    throwException(ERR_INVALID_INSTRUCTION, (void *)next_8, "\n Program stopped.Invalid lowerByte opcode for special upperByte %#04x (movlb) detected : 0x%2x",upperByte,next_8);
-    //printf("error, no such opcode");
-    //sprintf(buffer,"error, no such opcode");
+    throwException(next_8, (void *)next_8, "\n Program stopped.Invalid lowerByte opcode for special upperByte %#04x (movlb) detected : 0x%2x",upperByte,next_8);
   }
   return buffer;
 }
@@ -1440,19 +890,19 @@ int ad(uint8_t code)
   uint8_t adcode = upperByte & 0x03;
   if(adcode == 0x00)
   {
-    return 00;
+    return 1;
   }
   else if( adcode == 0x01)
   {
-    return 01;
+    return 2;
   }
   else if( adcode == 0x02)
   {
-    return 10;
+    return 3;
   }
   else
   {
-    return 11;
+    return 4;
   }
 }
 
@@ -1465,11 +915,11 @@ int a(uint8_t code)
   uint8_t adcode = upperByte & 0x01;
   if(adcode == 0x00)
   {
-    return 0;
+    return 1;
   }
   else
   {
-    return 1;
+    return 2;
   }
 }
 /**
