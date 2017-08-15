@@ -33,7 +33,7 @@ void test_movff_subwfb_addwf_subwfb_all_correct(void)
   Try {
     char *result = disassembleNBytes(&codePtr,4);          // the last value represent how many instruction we display
     TEST_ASSERT_EQUAL(10, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL_STRING("movff 0x955,0x588\nsubwfb  0x66 WREG,BANKED\nsubwfb  0x77 WREG,BANKED\nsubwfb  0x68 WREG,BANKED\n",result);
+    TEST_ASSERT_EQUAL_STRING("movff 0x955,0x588\nsubwfb 0x66 WREG,BANKED\nsubwfb 0x77 WREG,BANKED\nsubwfb 0x68 WREG,BANKED\n",result);
 
   } Catch(ex) {
     dumpException(ex);
@@ -56,7 +56,7 @@ void test_addwf_movlw_bra_movff_bsf_all_correct(void)
     char* result = disassembleNBytes(&codePtr,5);
     TEST_ASSERT_EQUAL(12, codePtr - memory);               //compare number of bytes which been successfully been disassemble
     //printf("%s",result);
-    TEST_ASSERT_EQUAL_STRING("addwf  0x25 WREG,ACCESS\nmovlw 0x66\nbra 0x015\nmovff 0x058,0x188\nbsf  0x85 3,ACCESS\n",result);
+    TEST_ASSERT_EQUAL_STRING("addwf 0x25 WREG,ACCESS\nmovlw 0x66\nbra 0x015\nmovff 0x058,0x188\nbsf  0x85 3,ACCESS\n",result);
   } Catch(ex) {
     dumpException(ex);
     //printf("Error instruction: 0x%2x",ex->errorCode);
@@ -122,7 +122,7 @@ void test_sublw_iorlw_xorlw_andlw_retlw_mullw_movlw_addlw_movlb_all_correct(void
   Try {
     char* result = disassembleNBytes(&codePtr,9);           // the last value represent how many instruction we display
     TEST_ASSERT_EQUAL(18, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL_STRING("sublw 0x65\niorlw 0x88\nxorlw 0x10\nandlw 0x25\nretlw 0x66\nmullw 0x85\nmovlw 0x77\naddlw  0x7\nmovlb 0x7\n",result);
+    TEST_ASSERT_EQUAL_STRING("sublw 0x65\niorlw 0x88\nxorlw 0x10\nandlw 0x25\nretlw 0x66\nmullw 0x85\nmovlw 0x77\naddlw 0x 7\nmovlb 0x7\n",result);
   } Catch(ex) {
     dumpException(ex);
   }
@@ -308,7 +308,7 @@ void test_only_one_instuction_word_using_disassembleNBytes_function(void)
   Try {
     char* result = disassembleNBytes(&codePtr,1);           // the last value represent how many instruction we display
     TEST_ASSERT_EQUAL(2, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL_STRING("addwfc  0x24 f,BANKED\n",result);
+    TEST_ASSERT_EQUAL_STRING("addwfc 0x24 f,BANKED\n",result);
   } Catch(ex) {
     dumpException(ex);
     //printf("Error instruction: 0x%2x",ex->errorCode);
@@ -349,7 +349,7 @@ void test_only_one_instuction_word_using_disassemble_function(void)
   Try{
   char* result = disassemble(&codePtr);
   printf("%s",result);
-  TEST_ASSERT_EQUAL_STRING("xorwf  0x24 WREG,ACCESS",result);
+  TEST_ASSERT_EQUAL_STRING("xorwf 0x24 WREG,ACCESS",result);
   }Catch(ex) {
   dumpException(ex);
   }
@@ -840,7 +840,6 @@ void test_bcf_bsf_btfsc_btfss_btg_but_bsf_wrong(void)
     freeException(ex);                // If at Try there all get the correct thing , we no need to free it.
 }
 
-
 void test_only_one_instuction_word_using_disassemble_function1(void)
 {
   CEXCEPTION_T ex;
@@ -853,226 +852,9 @@ void test_only_one_instuction_word_using_disassemble_function1(void)
   Try{
   char* result = disassemble(&codePtr);
   printf("%s",result);
-  TEST_ASSERT_EQUAL_STRING("xorwf  0x24 WREG,ACCESS",result);
+  TEST_ASSERT_EQUAL_STRING("addwfc 0x24 f,BANKED",result);
   }Catch(ex) {
   dumpException(ex);
   }
   //freeException(ex);
 }
-/*
-void test_clrf_expect_correct(void)
-{
-  uint8_t memory[]={0x6A,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("clrf  0x59 ACCESS",result);
-  free(result);
-}
-
-void test_clrf_expect_wrong(void)
-{
-  uint8_t memory[]={0x6B,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("clrf  0x59 ACCESS",result);
-  free(result);
-}
-
-void test_comf_expect_correct(void)
-{
-  uint8_t memory[]={0x1C,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("comf  0x59 WREG,ACCESS",result);
-  free(result);
-}
-
-void test_comf_expect_wrong(void)
-{
-  uint8_t memory[]={0x1F,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("comf  0x59 f,ACCESS",result);
-  free(result);
-}
-
-void test_cpfseq_expect_correct(void)
-{
-  uint8_t memory[]={0x62,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("cpfseq  0x59 ACCESS",result);
-  free(result);
-}
-
-void test_cpfseq_expect_wrong(void)
-{
-  uint8_t memory[]={0x63,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("cpfseq  0x59 ACCESS",result);
-  free(result);
-}
-
-void test_cpfsgt_expect_correct(void)
-{
-  uint8_t memory[]={0x64,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("cpfsgt  0x59 ACCESS",result);
-  free(result);
-}
-
-void test_cpfsgt_expect_wrong(void)
-{
-  uint8_t memory[]={0x6E,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("cpfsgt  0x59 ACCESS",result);
-  free(result);
-}
-
-void test_cpfslt_expect_correct(void)
-{
-  uint8_t memory[]={0x60,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("cpfslt  0x59 ACCESS",result);
-  free(result);
-}
-
-void test_cpfslt_expect_wrong(void)
-{
-  uint8_t memory[]={0x61,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("cpfslt  0x59 ACCESS",result);
-  free(result);
-}
-
-void test_decf_expect_correct(void)
-{
-  uint8_t memory[]={0x04,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("decf  0x59 WREG,ACCESS",result);
-  free(result);
-}
-
-void test_decf_expect_wrong(void)
-{
-  uint8_t memory[]={0x07,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("decf  0x59 f,ACCESS",result);
-  free(result);
-}
-
-void test_decfsz_expect_correct(void)
-{
-  uint8_t memory[]={0x2E,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("decfsz  0x59 f,ACCESS",result);
-  free(result);
-}
-
-void test_decfsz_expect_wrong(void)
-{
-  uint8_t memory[]={0x2D,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("decfsz  0x59 f,BANKED",result);
-  free(result);
-}
-
-void test_dcfsnz_expect_correct(void)
-{
-  uint8_t memory[]={0x4D,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("dcfsnz  0x59 WREG,BANKED",result);
-  free(result);
-}
-
-void test_dcfsnz_expect_wrong(void)
-{
-  uint8_t memory[]={0x4E,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("dcfsnz  0x59 f,BANKED",result);
-  free(result);
-}
-
-void test_incf_expect_correct(void)
-{
-  uint8_t memory[]={0x29,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("incf  0x59 WREG,BANKED",result);
-  free(result);
-}
-
-void test_incf_expect_wrong(void)
-{
-  uint8_t memory[]={0x2A,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("incf  0x59 f,BANKED",result);
-  free(result);
-}
-
-void test_btg_expect_wrong(void)
-{
-  uint8_t memory[]={0x86,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("btg  0x59 6,ACCESS",result);
-  free(result);
-}
-
-void test_bc_expect_wrong(void)
-{
-  uint8_t memory[]={0x44,0x59};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("bc  0x59",result);
-  free(result);
-}
-
-void test_tblrd_expect_wrong(void)
-{
-  uint8_t memory[]={0x00,0xFF};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("TBLRD*",result);
-  free(result);
-}
-
-void test_addlw_expect_correct(void)
-{
-  uint8_t memory[]={0x0F,0x58};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("addlw 0x58",result);
-  free(result);
-}
-
-void test_movlb_expect_correct(void)
-{
-  uint8_t memory[]={0x01,0x0F};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("movlb 0xf",result);
-  free(result);
-}
-
-void test_nop2_expect_correct(void)
-{
-  uint8_t memory[]={0xFF,0xFF};
-  uint8_t *codePtr = memory;
-  char* result = disassembler(&codePtr);
-  TEST_ASSERT_EQUAL_STRING("nop",result);
-  free(result);
-}
-*/
