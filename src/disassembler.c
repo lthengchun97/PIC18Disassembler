@@ -276,8 +276,6 @@ CheckIdentifier opcodeTable[256] = {
 
 char* disassembleNBytes(uint8_t **codePtrPtr, int nCodes)
 {
-  //uint8_t startCodePtr = codePtr[0];
-
   char* str;
   char* buff = malloc(30*nCodes);
   str=malloc(30*nCodes);
@@ -317,10 +315,7 @@ char* disassemble(uint8_t **codePtrPtr)
 
   if(opcodeTable[upperByte].execute == 0)                       // Once detect the wrong instruction, it will stop ...
   {
-    //char* buffer = malloc(2048);
-    //sprintf(buffer,"Error Opcode: 0x%2x",upperByte);
     throwException(upperByte, (void *)upperByte, "\n Program stopped.Invalid upperByte opcode detected : 0x%2x",upperByte);
-    //return buffer;
   }
   else                                                         // If the instruction can be find, it will continue here ...
   {
@@ -367,7 +362,7 @@ char* composeF(char* opcodeName, uint8_t fileReg)
 char *movff(uint8_t *code)
 {
   char *buffer;
-  buffer = malloc(1028);
+  buffer = malloc(30);
   upperByte = upperByte & 0x0F;
   uint8_t movff_test = (next_16 >> 4) & 0x0F;
   thirdcode = next_16 & 0x0F;
@@ -385,7 +380,7 @@ char *movff(uint8_t *code)
 char *rcall(uint8_t *code)
 {
   char *buffer;
-  buffer = malloc(1028);
+  buffer = malloc(30);
   upperByte = upperByte &0x07;
   sprintf(buffer,"rcall 0x%x%2x",upperByte,next_8);
   return buffer;
@@ -394,7 +389,7 @@ char *rcall(uint8_t *code)
 char *bra(uint8_t *code)
 {
   char *buffer;
-  buffer = malloc(1028);
+  buffer = malloc(30);
   upperByte = upperByte &0x07;
   sprintf(buffer,"bra 0x%x%2x",upperByte,next_8);
   return buffer;
@@ -403,7 +398,7 @@ char *bra(uint8_t *code)
 char* call(uint8_t *code)
 {
   char* buffer;
-  buffer = malloc(1028);
+  buffer = malloc(30);
   thirdcode = next_16 & 0xF0;
   if(thirdcode == 0xF0)
     {
@@ -419,15 +414,15 @@ char* call(uint8_t *code)
 char* goto1(uint8_t *code)
 {
   char* buffer;
-  buffer = malloc(1028);
-  next_16 = next_16 & 0xF0;
-  if(next_16 == 0xF0)
+  buffer = malloc(30);
+  thirdcode = next_16 & 0xF0;
+  if(thirdcode == 0xF0)
     {
       sprintf(buffer,"goto 0x%2x\nnop 0x%2x",next_8,next_32);
     }
   else
   {
-    sprintf(buffer,"invalid");
+    throwException(next_16, (void *)next_16, "\n Program stopped.Invalid thirdByte opcode for special opcode goto (0x%2x) detected : 0x%2x",upperByte,next_16);
   }
   return buffer;
 }
@@ -435,17 +430,15 @@ char* goto1(uint8_t *code)
 char* lfsr(uint8_t *code)
 {
   char* buffer;
-  buffer = malloc(1028);
-  next_16 = next_16 & 0xFF;
-  //next_8 = next_8 >> 4;
-  //next_8 = next_8 & 0x03;
-  if(next_16 == 0xF0)
+  buffer = malloc(30);
+  thirdcode = next_16 & 0xFF;
+  if(thirdcode == 0xF0)
     {
       sprintf(buffer,"lfsr 0x%2x, 0x%2x",next_8,next_32);
     }
   else
   {
-    sprintf(buffer,"invalid");
+    throwException(next_16, (void *)next_16, "\n Program stopped.Invalid thirdByte opcode for special opcode lfsr (0x%2x) detected : 0x%2x",upperByte,next_16);
   }
   return buffer;
 }
@@ -597,95 +590,42 @@ char* xorwf(uint8_t *code)
   return composeFda("xorwf",next_8,ad(code));
 }
 
-char* bcf(uint8_t *code)
+char* composeAb(char* opcodeName, uint8_t fileReg,int checkBflags,int dirAccessFlags)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = a(opcode);
-  int getB = bbb(opcode);
-
-  if(differentiate == 1)
-  {
-    sprintf(buffer,"bcf  %#4x %d,ACCESS",next_8,getB);
-  }
-  else
-  {
-    sprintf(buffer,"bcf  %#4x %d,BANKED",next_8,getB);
+  char* buffer = malloc(50);
+  switch(dirAccessFlags){
+    case 1:sprintf(buffer,"%s  %#4x %d,ACCESS",opcodeName,fileReg,checkBflags);
+            break;
+    case 2:sprintf(buffer,"%s  %#4x %d,BANKED",opcodeName,fileReg,checkBflags);
+            break;
   }
   return buffer;
+}
+
+char* bcf(uint8_t *code)
+{
+  return composeAb("bcf",next_8,bbb(code),a(code));
 }
 
 char* bsf(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = a(opcode);
-  int getB = bbb(opcode);
-
-  if(differentiate == 1)
-  {
-    sprintf(buffer,"bsf  %#4x %d,ACCESS",next_8,getB);
-  }
-  else
-  {
-    sprintf(buffer,"bsf  %#4x %d,BANKED",next_8,getB);
-  }
-  return buffer;
+  return composeAb("bsf",next_8,bbb(code),a(code));
 }
 
 char* btfsc(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = a(opcode);
-  int getB = bbb(opcode);
-
-  if(differentiate == 1)
-  {
-    sprintf(buffer,"bstfsc  %#4x %d,ACCESS",next_8,getB);
-  }
-  else
-  {
-    sprintf(buffer,"btfsc  %#4x %d,BANKED",next_8,getB);
-  }
-  return buffer;
+  return composeAb("btfsc",next_8,bbb(code),a(code));
 }
 
 
 char* btfss(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = a(opcode);
-  int getB = bbb(opcode);
-
-  if(differentiate == 1)
-  {
-    sprintf(buffer,"btfss  %#4x %d,ACCESS",next_8,getB);
-  }
-  else
-  {
-    sprintf(buffer,"btfss  %#4x %d,BANKED",next_8,getB);
-  }
-  return buffer;
+  return composeAb("btfss",next_8,bbb(code),a(code));
 }
 
 char* btg(uint8_t *code)
 {
-  char* buffer;
-  buffer = malloc(1028);
-  int differentiate = a(opcode);
-  int getB = bbb(opcode);
-
-  if(differentiate == 1)
-  {
-    sprintf(buffer,"btg  %#4x %d,ACCESS",next_8,getB);
-  }
-  else
-  {
-    sprintf(buffer,"btg  %#4x %d,BANKED",next_8,getB);
-  }
-  return buffer;
+  return composeAb("btg",next_8,bbb(code),a(code));
 }
 
 char* bc(uint8_t *code)

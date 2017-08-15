@@ -88,6 +88,7 @@ char* disassemble (uint8_t **codePtrPtr);
 char* disassembleNBytes(uint8_t **codePtrPtr, int nBytes);
 char* composeFda(char* opcodeName, uint8_t fileReg,int dirAccessFlags);
 char* composeFa(char* opcodeName, uint8_t fileReg,int dirAccessFlags);
+char* composeAb(char* opcodeName, uint8_t fileReg,int checkBflags,int dirAccessFlags);
 char* codeAlign(char* displayOut, ...);
 extern CheckIdentifier opcodeTable[];
 #endif // _DISASSEMBLER_H
