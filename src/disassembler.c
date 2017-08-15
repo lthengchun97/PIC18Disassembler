@@ -353,6 +353,18 @@ char* composeFa(char* opcodeName, uint8_t fileReg,int dirAccessFlags)
   return buffer;
 }
 
+char* composeAb(char* opcodeName, uint8_t fileReg,int checkBflags,int dirAccessFlags)
+{
+  char* buffer = malloc(50);
+  switch(dirAccessFlags){
+    case 1:sprintf(buffer,"%s  %#4x %d,ACCESS",opcodeName,fileReg,checkBflags);
+            break;
+    case 2:sprintf(buffer,"%s  %#4x %d,BANKED",opcodeName,fileReg,checkBflags);
+            break;
+  }
+  return buffer;
+}
+
 char* composeF(char* opcodeName, uint8_t fileReg)
 {
   char* buffer = malloc(50);
@@ -588,18 +600,6 @@ char* tstfsz(uint8_t *code)
 char* xorwf(uint8_t *code)
 {
   return composeFda("xorwf",next_8,ad(code));
-}
-
-char* composeAb(char* opcodeName, uint8_t fileReg,int checkBflags,int dirAccessFlags)
-{
-  char* buffer = malloc(50);
-  switch(dirAccessFlags){
-    case 1:sprintf(buffer,"%s  %#4x %d,ACCESS",opcodeName,fileReg,checkBflags);
-            break;
-    case 2:sprintf(buffer,"%s  %#4x %d,BANKED",opcodeName,fileReg,checkBflags);
-            break;
-  }
-  return buffer;
 }
 
 char* bcf(uint8_t *code)
