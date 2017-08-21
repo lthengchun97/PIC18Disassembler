@@ -49,7 +49,7 @@ void test_addwf_movlw_bra_movff_bsf_all_correct(void)
   uint8_t *codePtr = memory;
   printf("=============================================================================================");
   printf("\nTEST 2 :\n");
-  printf("OUTPUT:\n");         
+  printf("OUTPUT:\n");
   printf("\n");
   Try {
     char* result = disassembleNBytes(&codePtr,5);           // the last value represent how many instruction we display
@@ -78,7 +78,7 @@ void test_clrf_addlw_rcall_tblrt_lfsr_and_last_upperbyte_wrong(void)
   } Catch(ex) {
     //TEST_ASSERT_EQUAL_STRING("movff  0x955, 0x588subwfb  0x66 WREG,BANKEDsubwfb  0x77 WREG,BANKEDsubwfb  0x68 WREG,BANKED",ex->msg);
     TEST_ASSERT_EQUAL(12, codePtr - memory);                //compare number of bytes which been successfully been disassembles
-    TEST_ASSERT_EQUAL(0xE9, ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0xE9, ex->errorCode);
     dumpException(ex);
   }
 
@@ -99,7 +99,7 @@ void test_sublw_iorlw_xorlw_andlw_retlw_mullw_movlw_addlw_movlb_given_movlw_wron
     //TEST_ASSERT_EQUAL_STRING("addwf  0x25 WREG,ACCESSmovlw 0x66bra 0x015movff 0x058,0x188bsf  0x85 3,ACCESS",result);
   } Catch(ex) {
     TEST_ASSERT_EQUAL(12, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0xE9, ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0xE9, ex->errorCode);
     dumpException(ex);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
@@ -140,7 +140,7 @@ void test_sublw_iorlw_xorlw_andlw_retlw_mullw_movlw_addlw_movlb_but_movlb_wrong(
   } Catch(ex) {
     dumpException(ex);
     TEST_ASSERT_EQUAL(18, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0x77, ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0x77, ex->errorCode);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
   freeException(ex);                // If at Try there all get the correct thing , we no need to free it.
@@ -161,7 +161,7 @@ void test_sublw_iorlw_xorlw_andlw_retlw_mullw_movlw_movlb_addlw_but_movlb_wrong(
     TEST_ASSERT_EQUAL_STRING("sublw 0x65iorlw 0x88xorlw 0x10andlw 0x25retlw 0x66mullw 0x85movlw 0x77addlw  0x7movlb 0x7",result);
   } Catch(ex) {
     TEST_ASSERT_EQUAL(16, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0xFF, ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0xFF, ex->errorCode);
     dumpException(ex);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
@@ -183,7 +183,7 @@ void test_sublw_iorlw_xorlw_andlw_retlw_movlb_mullw_movlw_addlw_but_movlb_wrong1
   } Catch(ex) {
     dumpException(ex);
     TEST_ASSERT_EQUAL(12, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0x8F,ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0x8F,ex->errorCode);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
   freeException(ex);                // If at Try there all get the correct thing , we no need to free it.
@@ -223,7 +223,7 @@ void test_tblrd_tblwt_given_wrong_last_byte(void)
     //TEST_ASSERT_EQUAL_STRING("TBLRD*TBLRD*+TBLRD*-TBLRD+*TBLWT*TBLWT*+TBLWT*-TBLWT+*",result);
   } Catch(ex) {
     TEST_ASSERT_EQUAL(16, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0x23, ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0x23, ex->errorCode);
     dumpException(ex);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
@@ -244,7 +244,7 @@ void test_tblrd_tblwt_given_earlier_wrong_lowerbyte(void)
     TEST_ASSERT_EQUAL_STRING("TBLRD*TBLRD*+TBLRD*-TBLRD+*TBLWT*TBLWT*+TBLWT*-TBLWT+*",result);
   } Catch(ex) {
     TEST_ASSERT_EQUAL(4, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0x89,ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0x89,ex->errorCode);
     dumpException(ex);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
@@ -265,7 +265,7 @@ void test_tblrd_tblwt_given_middle_wrong_lowerbyte(void)
     TEST_ASSERT_EQUAL_STRING("TBLRD*TBLRD*+TBLRD*-TBLRD+*TBLWT*TBLWT*+TBLWT*-TBLWT+*",result);
   } Catch(ex) {
     TEST_ASSERT_EQUAL(8, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0x78,ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0x78,ex->errorCode);
     dumpException(ex);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
@@ -326,7 +326,7 @@ void test_only_one_instuction_word_and_wrong_using_disassembleNBytes_function(vo
     TEST_ASSERT_EQUAL_STRING("addwfc  0x24 f,BANKED",result);
   } Catch(ex) {
     TEST_ASSERT_EQUAL(0, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0xE8,ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0xE8,ex->errorCode);
     dumpException(ex);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
@@ -365,7 +365,7 @@ void test_only_one_instuction_word_and_wrong_using_disassemble_function(void)
   char* result = disassemble(&codePtr);
   }Catch(ex) {
     TEST_ASSERT_EQUAL(0, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0xE9,ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0xE9,ex->errorCode);
     dumpException(ex);
   }
   freeException(ex);
@@ -405,7 +405,7 @@ void test_clrwdt_daw_nop_pop_push_reset_retfie_return_sleep_given_middle_wrong(v
     //TEST_ASSERT_EQUAL_STRING("clrwdt daw nop pop push reset retfie return sleep ",result);
   } Catch(ex) {
     TEST_ASSERT_EQUAL(12, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0x7F,ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0x7F,ex->errorCode);
     dumpException(ex);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
@@ -426,7 +426,7 @@ void test_clrwdt_daw_nop_pop_push_reset_retfie_return_sleep_given_lastbyte_wrong
   //  TEST_ASSERT_EQUAL_STRING("clrwdt daw nop pop push reset retfie return sleep ",result);
   } Catch(ex) {
     TEST_ASSERT_EQUAL(18, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0x78,ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0x78,ex->errorCode);
     dumpException(ex);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
@@ -467,7 +467,7 @@ void test_bnz_bc_bnc_bov_bnov_bn_bnn_given_middle_wrong_instruction(void)
     //TEST_ASSERT_EQUAL_STRING("bnov 0x66bc 0x89bnc 0xf1bov 0x5abnov 0x4abn 0xeebnn 0x9a",result);
   } Catch(ex) {
     TEST_ASSERT_EQUAL(6, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    TEST_ASSERT_EQUAL(0xE8,ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0xE8,ex->errorCode);
     dumpException(ex);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
@@ -489,7 +489,7 @@ void test_bnz_bc_bnc_bov_bnov_bn_bnn_given_last_upperByte_wrong_instruction(void
   } Catch(ex) {
     dumpException(ex);
     TEST_ASSERT_EQUAL(12, codePtr - memory);              // in this test only 12 bytes will be run.
-    TEST_ASSERT_EQUAL(0xE9, ex->errorCode);               // 0xE9 will be the errorCode of this test function
+    TEST_ASSERT_EQUAL_HEX(0xE9, ex->errorCode);               // 0xE9 will be the errorCode of this test function
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
     freeException(ex);                // If at Try there all get the correct thing , we no need to free it.
@@ -830,7 +830,7 @@ void test_bcf_bsf_btfsc_btfss_btg_but_bsf_wrong(void)
   } Catch(ex) {
     dumpException(ex);
     TEST_ASSERT_EQUAL(2, codePtr - memory);              // in this test only 12 bytes will be run.
-    TEST_ASSERT_EQUAL(0xE8,ex->errorCode);
+    TEST_ASSERT_EQUAL_HEX(0xE8,ex->errorCode);
     //printf("Error instruction: 0x%2x",ex->errorCode);
   }
     freeException(ex);                // If at Try there all get the correct thing , we no need to free it.
