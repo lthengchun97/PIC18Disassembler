@@ -22,9 +22,9 @@ struct CheckIdentifier{
   int size;
 };
 char* printError(uint8_t *code);
-int ad(uint8_t code);
-int a(uint8_t code);
-int bbb(uint8_t code);
+int ad(uint8_t *code);
+int a(uint8_t *code);
+int bbb(uint8_t *code);
 char* addwf (uint8_t *code);
 char* addwfc(uint8_t *code);
 char* andwf(uint8_t *code);

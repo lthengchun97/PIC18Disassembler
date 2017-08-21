@@ -315,7 +315,7 @@ char* disassemble(uint8_t **codePtrPtr)
 
   if(opcodeTable[upperByte].execute == 0)                       // Once detect the wrong instruction, it will stop ...
   {
-    throwException(upperByte, (void *)upperByte, "\n Program stopped.Invalid upperByte opcode detected : 0x%2x",upperByte);
+    throwException(upperByte,"\n Program stopped.Invalid upperByte opcode detected : 0x%2x",upperByte);
   }
   else                                                         // If the instruction can be find, it will continue here ...
   {
@@ -371,6 +371,7 @@ char* composeF(char* opcodeName, uint8_t fileReg)
   sprintf(buffer,"%s 0x%2x",opcodeName,fileReg);
   return buffer;
 }
+
 char *movff(uint8_t *code)
 {
   char *buffer;
@@ -384,7 +385,7 @@ char *movff(uint8_t *code)
   }
   else
   {
-    throwException(next_16, (void *)next_16, "\n Program stopped.Invalid thirdByte opcode for special opcode movff (0x%2x)detected : 0x%2x",upperByte,next_16);
+    throwException(next_16,"\n Program stopped.Invalid thirdByte opcode for special opcode movff (0x%2x)detected : 0x%2x",upperByte,next_16);
   }
   return buffer;
 }
@@ -418,7 +419,7 @@ char* call(uint8_t *code)
     }
   else
   {
-    throwException(next_16, (void *)next_16, "\n Program stopped.Invalid thirdByte opcode for special opcode call (0x%2x) detected : 0x%2x",upperByte,next_16);
+    throwException(next_16, "\n Program stopped.Invalid thirdByte opcode for special opcode call (0x%2x) detected : 0x%2x",upperByte,next_16);
   }
   return buffer;
 }
@@ -434,7 +435,7 @@ char* goto1(uint8_t *code)
     }
   else
   {
-    throwException(next_16, (void *)next_16, "\n Program stopped.Invalid thirdByte opcode for special opcode goto (0x%2x) detected : 0x%2x",upperByte,next_16);
+    throwException(next_16, "\n Program stopped.Invalid thirdByte opcode for special opcode goto (0x%2x) detected : 0x%2x",upperByte,next_16);
   }
   return buffer;
 }
@@ -450,7 +451,7 @@ char* lfsr(uint8_t *code)
     }
   else
   {
-    throwException(next_16, (void *)next_16, "\n Program stopped.Invalid thirdByte opcode for special opcode lfsr (0x%2x) detected : 0x%2x",upperByte,next_16);
+    throwException(next_16,"\n Program stopped.Invalid thirdByte opcode for special opcode lfsr (0x%2x) detected : 0x%2x",upperByte,next_16);
   }
   return buffer;
 }
@@ -666,7 +667,7 @@ char* bov(uint8_t *code)
 char* zero(uint8_t *code)
 {
   char* buffer;
-  buffer = malloc(1028);
+  buffer = malloc(20);
   if(next_8 == 0x08)
   {
     sprintf(buffer,"TBLRD*");
@@ -737,7 +738,7 @@ char* zero(uint8_t *code)
   }
   else
   {
-    throwException(next_8, (void *)next_8, "\n Program stopped.Invalid lowerByte opcode for special upperByte 0x00 detected : 0x%2x",next_8);
+    throwException(next_8, "\n Program stopped.Invalid lowerByte opcode for special upperByte 0x00 detected : 0x%2x",next_8);
   }
   return buffer;
 }
@@ -794,7 +795,7 @@ char* movlb(uint8_t *code)
   }
   else
   {
-    throwException(next_8, (void *)next_8, "\n Program stopped.Invalid lowerByte opcode for special upperByte %#04x (movlb) detected : 0x%2x",upperByte,next_8);
+    throwException(next_8, "\n Program stopped.Invalid lowerByte opcode for special upperByte %#04x (movlb) detected : 0x%2x",upperByte,next_8);
   }
   return buffer;
 }
@@ -802,7 +803,7 @@ char* movlb(uint8_t *code)
 char* nop1(uint8_t *code)
 {
   char *buffer;
-  buffer = malloc(1028);
+  buffer = malloc(5);
   sprintf(buffer,"nop");
   return buffer;
 }
@@ -825,7 +826,7 @@ char* nop1(uint8_t *code)
   And this function can be called by the opcodeTable function to detect what
   it should be wrote in.
 **/
-int ad(uint8_t code)
+int ad(uint8_t *code)
 {
   uint8_t adcode = upperByte & 0x03;
   if(adcode == 0x00)
@@ -850,7 +851,7 @@ int ad(uint8_t code)
   In this function, we only find the a value for the opcode function,
   because it doesnt have the d value to do,whereas we can just ignore it.
 **/
-int a(uint8_t code)
+int a(uint8_t *code)
 {
   uint8_t adcode = upperByte & 0x01;
   if(adcode == 0x00)
@@ -867,7 +868,7 @@ int a(uint8_t code)
   for some certain opcode.
   It is from 0x00 to 0x0F.
 **/
-int bbb(uint8_t code)
+int bbb(uint8_t *code)
 {
   uint8_t adcode = upperByte & 0x0E;
   if(adcode == 0x00)
@@ -902,4 +903,6 @@ int bbb(uint8_t code)
   {
     return 7;
   }
+  else
+    return 0;
 }

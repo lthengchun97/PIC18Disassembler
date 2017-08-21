@@ -13,12 +13,11 @@ struct Exception {
   int  errorCode;
   void *data;
 };
-void dumpErrorMessage(Exception *e, int lineNo);
 Exception *createException(char *msg, int errorCode);
 void freeException(Exception *e);
 void dumpException(Exception *e);
 
-void throwException(int errorCode, void *data, char *message, ...);
+void throwException(int errorCode, char *message, ...);
 
 
 #endif // Exception_H

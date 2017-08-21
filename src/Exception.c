@@ -9,7 +9,7 @@
 #include "token.h"
 
 
-void throwException(int errorCode, void *data, char *message, ...) {
+void throwException(int errorCode, char *message, ...) {
   va_list args;
   char *buffer;
   int length;
@@ -24,7 +24,7 @@ void throwException(int errorCode, void *data, char *message, ...) {
 
   e->msg = buffer;
   e->errorCode = errorCode;
-  e->data = data;
+  //e->data = data;
 
   Throw(e);
 }
