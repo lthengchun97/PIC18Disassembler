@@ -49,11 +49,10 @@ void test_addwf_movlw_bra_movff_bsf_all_correct(void)
   uint8_t *codePtr = memory;
   printf("=============================================================================================");
   printf("\nTEST 2 :\n");
-  printf("OUTPUT:\n");
-  //char* result = disassembleNBytes(&codePtr,4);          // the last value represent how many instruction we display
+  printf("OUTPUT:\n");         
   printf("\n");
   Try {
-    char* result = disassembleNBytes(&codePtr,5);
+    char* result = disassembleNBytes(&codePtr,5);           // the last value represent how many instruction we display
     TEST_ASSERT_EQUAL(12, codePtr - memory);               //compare number of bytes which been successfully been disassemble
     //printf("%s",result);
     TEST_ASSERT_EQUAL_STRING("addwf 0x25 WREG,ACCESS\nmovlw 0x66\nbra 0x015\nmovff 0x058,0x188\nbsf  0x85 3,ACCESS\n",result);
@@ -69,13 +68,11 @@ void test_addwf_movlw_bra_movff_bsf_all_correct(void)
 void test_clrf_addlw_rcall_tblrt_lfsr_and_last_upperbyte_wrong(void)
 {
   CEXCEPTION_T ex;
-  //char* result;
   uint8_t memory[]={0x6B,0x70,0x0F,0x55,0xD8,0x66,0x00,0x09,0xEE,0x55,0xF0,0x15,0xE9,0x66};
   uint8_t *codePtr = memory;
   printf("=============================================================================================");
   printf("\nTEST 3 :\n");
   printf("OUTPUT:\n");
-  //char* result = disassembleNBytes(&codePtr,6);          // the last value represent how many instruction we display
   printf("\n");
   Try {
     disassembleNBytes(&codePtr,6);
