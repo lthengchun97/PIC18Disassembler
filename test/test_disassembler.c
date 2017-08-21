@@ -54,7 +54,6 @@ void test_addwf_movlw_bra_movff_bsf_all_correct(void)
   Try {
     char* result = disassembleNBytes(&codePtr,5);           // the last value represent how many instruction we display
     TEST_ASSERT_EQUAL(12, codePtr - memory);               //compare number of bytes which been successfully been disassemble
-    //printf("%s",result);
     TEST_ASSERT_EQUAL_STRING("addwf 0x25 WREG,ACCESS\nmovlw 0x66\nbra 0x015\nmovff 0x058,0x188\nbsf  0x85 3,ACCESS\n",result);
   } Catch(ex) {
     dumpException(ex);
