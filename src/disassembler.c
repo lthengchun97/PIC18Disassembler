@@ -7,8 +7,6 @@
 #include "Exception.h"
 #include <stdarg.h>
 #include "string.h"
-#include "token.h"
-#include "error.h"
 
 #define KB 1024
 

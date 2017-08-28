@@ -9,8 +9,6 @@
 #include "CExceptionConfig.h"
 #include <stdarg.h>
 #include <string.h>
-#include "error.h"
-#include "Token.h"
 
 void setUp(void)
 {

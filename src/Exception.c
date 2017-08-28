@@ -5,9 +5,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "error.h"
-#include "token.h"
-
 
 void throwException(int errorCode, char *message, ...) {
   va_list args;

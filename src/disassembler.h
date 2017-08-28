@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "token.h"
-#include "error.h"
 
 uint8_t next_8;
 uint8_t opcode;
